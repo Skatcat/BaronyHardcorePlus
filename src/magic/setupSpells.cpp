@@ -199,6 +199,30 @@ void setupSpells()   ///TODO: Verify this function.
 	spellElement_magicmissile.duration = 0;
 	strcpy(spellElement_magicmissile.element_internal_name, "spell_element_magicmissile");
 
+	spellElementConstructor(&spellElement_annihilateundead);
+	spellElement_annihilateundead.mana = 20;
+	spellElement_annihilateundead.base_mana = 20;
+	spellElement_annihilateundead.overload_multiplier = 0;
+	spellElement_annihilateundead.damage = 175;
+	spellElement_annihilateundead.duration = 0;
+	strcpy(spellElement_annihilateundead.element_internal_name, "spell_element_annihilateundead");
+
+	spellElementConstructor(&spellElement_annihilatemonstrosities);
+	spellElement_annihilatemonstrosities.mana = 20;
+	spellElement_annihilatemonstrosities.base_mana = 20;
+	spellElement_annihilatemonstrosities.overload_multiplier = 0;
+	spellElement_annihilatemonstrosities.damage = 175;
+	spellElement_annihilatemonstrosities.duration = 0;
+	strcpy(spellElement_annihilatemonstrosities.element_internal_name, "spell_element_annihilatemonstrosities");
+
+	spellElementConstructor(&spellElement_annihilatehellspawn);
+	spellElement_annihilatehellspawn.mana = 20;
+	spellElement_annihilatehellspawn.base_mana = 20;
+	spellElement_annihilatehellspawn.overload_multiplier = 0;
+	spellElement_annihilatehellspawn.damage = 175;
+	spellElement_annihilatehellspawn.duration = 0;
+	strcpy(spellElement_annihilatehellspawn.element_internal_name, "spell_element_annihilatehellspawn");
+
 	spellElementConstructor(&spellElement_removecurse);
 	spellElement_removecurse.mana = 20;
 	spellElement_removecurse.base_mana = 20;
@@ -469,6 +493,66 @@ void setupSpells()   ///TODO: Verify this function.
 	node->size = sizeof(spellElement_t);
 	node->deconstructor = &spellElementDeconstructor;
 	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_annihilateundead);
+	strcpy(spell_annihilateundead.spell_internal_name, "spell_annihilateundead");
+	spell_annihilateundead.ID = SPELL_ANNIHILATEUNDEAD;
+	spell_annihilateundead.difficulty = 100;
+	node = list_AddNodeLast(&spell_annihilateundead.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_annihilateundead);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_annihilatemonstrosities);
+	strcpy(spell_annihilatemonstrosities.spell_internal_name, "spell_annihilatemonstrosities");
+	spell_annihilatemonstrosities.ID = SPELL_ANNIHILATEMONSTROSITIES;
+	spell_annihilatemonstrosities.difficulty = 100;
+	node = list_AddNodeLast(&spell_annihilatemonstrosities.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_annihilatemonstrosities);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_annihilatehellspawn);
+	strcpy(spell_annihilatehellspawn.spell_internal_name, "spell_annihilatehellspawn");
+	spell_annihilatehellspawn.ID = SPELL_ANNIHILATEHELLSPAWN;
+	spell_annihilatehellspawn.difficulty = 100;
+	node = list_AddNodeLast(&spell_annihilatehellspawn.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_annihilatehellspawn);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
 	element->node = node;
 
 	spellConstructor(&spell_cold);
