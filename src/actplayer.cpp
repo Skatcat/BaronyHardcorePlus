@@ -2418,7 +2418,7 @@ void actDeathCam(Entity* my)
 
 bool Player::PlayerMovement_t::isPlayerSwimming()
 {
-	if ( !players[player.playernum]->entity  || !stats[player.playernum])
+	if (!players[player.playernum]->entity || !stats[player.playernum])
 	{
 		return false;
 	}
@@ -2427,16 +2427,23 @@ bool Player::PlayerMovement_t::isPlayerSwimming()
 
 	// swimming
 	bool waterwalkingboots = false;
-	if ( stats[PLAYER_NUM]->shoes != NULL )
+	if (stats[PLAYER_NUM]->shoes != NULL)
 	{
-		if ( stats[PLAYER_NUM]->shoes->type == IRON_BOOTS_WATERWALKING )
+		if (stats[PLAYER_NUM]->shoes->type == IRON_BOOTS_WATERWALKING)
 		{
 			waterwalkingboots = true;
 		}
 	}
 	bool swimming = false;
 	bool levitating = isLevitating(stats[PLAYER_NUM]);
-	if ( !levitating && !waterwalkingboots && !noclip && !skillCapstoneUnlocked(PLAYER_NUM, PRO_SWIMMING) )
+	// fskin note: shift swim implementation
+	if ((!levitating && !waterwalkingboots && !noclip && !skillCapstoneUnlocked(PLAYER_NUM, PRO_SWIMMING))
+		// shift swim
+		|| ((levitating || waterwalkingboots || noclip || skillCapstoneUnlocked(PLAYER_NUM, PRO_SWIMMING)) && (keystatus[SDLK_LSHIFT] || keystatus[SDLK_RSHIFT])
+		// disable shift swim during open GUIs
+		&& !openedChest[PLAYER_NUM]
+		&& players[PLAYER_NUM]->gui_mode == GUI_MODE_NONE)
+			)
 	{
 		int x = std::min(std::max<unsigned int>(0, floor(my->x / 16)), map.width - 1);
 		int y = std::min(std::max<unsigned int>(0, floor(my->y / 16)), map.height - 1);
@@ -3103,9 +3110,27 @@ int Player::PlayerMovement_t::getCharacterWeight()
 	return weight;
 }
 
+int Player::PlayerMovement_t::getTinkWeight() // fskin note: Legendary Tinkering implementation
+{
+	int tinkweight = 0;
+	for (node_t* node = stats[player.playernum]->inventory.first; node != NULL; node = node->next)
+	{
+		Item* item = (Item*)node->element;
+		if (item != NULL)
+		{
+			if (item->type == TOOL_METAL_SCRAP || item->type == TOOL_MAGIC_SCRAP)
+			{
+				tinkweight += item->getWeight();
+			}
+		}
+	}
+	return tinkweight;
+}
+
 int Player::PlayerMovement_t::getCharacterModifiedWeight(int* customWeight)
 {
 	int weight = getCharacterWeight();
+	int tinkweight = getTinkWeight();
 	if ( customWeight )
 	{
 		weight = *customWeight;
@@ -3118,6 +3143,10 @@ int Player::PlayerMovement_t::getCharacterModifiedWeight(int* customWeight)
 	if ( stats[player.playernum]->EFFECTS[EFF_FAST] && !stats[player.playernum]->EFFECTS[EFF_SLOW] )
 	{
 		weight = weight * 0.5;
+	}
+	if (stats[player.playernum]->getModifiedProficiency(PRO_LOCKPICKING) >= SKILL_LEVEL_LEGENDARY)
+	{
+		weight = weight - tinkweight;  // fskin note: Legendary Tinkering implementation
 	}
 	return weight;
 }
@@ -3272,6 +3301,13 @@ void Player::PlayerMovement_t::handlePlayerMovement(bool useRefreshRateDelta)
 				backpedalMultiplier = 1.25;
 			}
 
+			// fskin note: legendary block lets you move faster; the dash effect condition fixes an exploit where dashing + blocking would give you speed high enough to clip through gates, we don't want that
+			if ( (stats[PLAYER_NUM]->getModifiedProficiency(PRO_SHIELD) >= SKILL_LEVEL_LEGENDARY) && stats[PLAYER_NUM]->defending && !stats[PLAYER_NUM]->EFFECTS[EFF_DASH])
+			{
+				PLAYER_VELX *= 1.2;
+				PLAYER_VELY *= 1.2;
+			}
+
 			if ( !inputs.hasController(PLAYER_NUM) )
 			{
 				if ( !stats[PLAYER_NUM]->EFFECTS[EFF_CONFUSED] )
@@ -3371,7 +3407,6 @@ void Player::PlayerMovement_t::handlePlayerMovement(bool useRefreshRateDelta)
 			my->playerStrafeDir = 0.0f;
 			my->playerStrafeVelocity = 0.0f;
 		}
-
 		speedFactor *= refreshRateDelta;
 		PLAYER_VELX += y_force * cos(my->yaw) * .045 * speedFactor / (1 + (stats[PLAYER_NUM]->defending || stats[PLAYER_NUM]->sneaking == 1));
 		PLAYER_VELY += y_force * sin(my->yaw) * .045 * speedFactor / (1 + (stats[PLAYER_NUM]->defending || stats[PLAYER_NUM]->sneaking == 1));
