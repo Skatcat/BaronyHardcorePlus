@@ -849,6 +849,7 @@ Entity* castSpell(Uint32 caster_uid, spell_t* spell, bool using_magicstaff, bool
 			duration /= getCostOfSpell((spell_t*)spellnode->element);
 			channeled_spell->channel_duration = duration; //Tell the spell how long it's supposed to last so that it knows what to reset its timer to.
 			caster->setEffect(EFF_LEVITATING, true, duration, false);
+			caster->drainMP(14, false); //fskin note: activating levitate always drains 15 MP. Hacky implementation because I couldn't figure out how to decouple mana cost and drain rate.
 			for ( int i = 0; i < MAXPLAYERS; ++i )
 			{
 				if ( players[i] && caster && (caster == players[i]->entity) )
@@ -2382,6 +2383,27 @@ Entity* castSpell(Uint32 caster_uid, spell_t* spell, bool using_magicstaff, bool
 					missileEntity->sprite = 173;
 				}
 			}
+			else if (!strcmp(element->element_internal_name, spellElement_annihilateundead.element_internal_name))
+			{
+				if (propulsion == PROPULSION_MISSILE)
+				{
+					missileEntity->sprite = 1317;
+				}
+			}
+			else if (!strcmp(element->element_internal_name, spellElement_annihilatemonstrosities.element_internal_name))
+			{
+				if (propulsion == PROPULSION_MISSILE)
+				{
+					missileEntity->sprite = 1318;
+				}
+			}
+			else if (!strcmp(element->element_internal_name, spellElement_annihilatehellspawn.element_internal_name))
+			{
+				if (propulsion == PROPULSION_MISSILE)
+				{
+					missileEntity->sprite = 1319;
+				}
+				}
 			else if ( !strcmp(element->element_internal_name, spellElement_dominate.element_internal_name) )
 			{
 				if ( propulsion == PROPULSION_MISSILE )
@@ -2451,21 +2473,21 @@ Entity* castSpell(Uint32 caster_uid, spell_t* spell, bool using_magicstaff, bool
 				// spellcasting increase chances.
 				if ( stat->getProficiency(PRO_SPELLCASTING) < 60 )
 				{
-					if ( local_rng.rand() % 6 == 0 ) //16.67%
+					if ( local_rng.rand() % 9 == 0 ) //16.67% //fskin note: chance decreased
 					{
 						caster->increaseSkill(PRO_SPELLCASTING);
 					}
 				}
 				else if ( stat->getProficiency(PRO_SPELLCASTING) < 80 )
 				{
-					if ( local_rng.rand() % 9 == 0 ) //11.11%
+					if ( local_rng.rand() % 15 == 0 ) //11.11% //fskin note: chance decreased
 					{
 						caster->increaseSkill(PRO_SPELLCASTING);
 					}
 				}
 				else // greater than 80
 				{
-					if ( local_rng.rand() % 12 == 0 ) //8.33%
+					if ( local_rng.rand() % 19 == 0 ) //8.33% //fskin note: chance decreased
 					{
 						caster->increaseSkill(PRO_SPELLCASTING);
 					}
@@ -2474,21 +2496,21 @@ Entity* castSpell(Uint32 caster_uid, spell_t* spell, bool using_magicstaff, bool
 				// magic increase chances.
 				if ( stat->getProficiency(PRO_SPELLCASTING) < 60 )
 				{
-					if ( local_rng.rand() % 7 == 0 ) //14.2%
+					if ( local_rng.rand() % 10 == 0 ) //14.2% //fskin note: chance decreased
 					{
 						caster->increaseSkill(PRO_MAGIC);
 					}
 				}
 				else if ( stat->getProficiency(PRO_SPELLCASTING) < 80 )
 				{
-					if ( local_rng.rand() % 10 == 0 ) //10.00%
+					if ( local_rng.rand() % 13 == 0 ) //10.00% //fskin note: chance decreased
 					{
 						caster->increaseSkill(PRO_MAGIC);
 					}
 				}
 				else // greater than 80
 				{
-					if ( local_rng.rand() % 13 == 0 ) //7.69%
+					if ( local_rng.rand() % 17 == 0 ) //7.69% //fskin note: chance decreased
 					{
 						caster->increaseSkill(PRO_MAGIC);
 					}
