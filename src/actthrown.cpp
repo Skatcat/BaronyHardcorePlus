@@ -1278,7 +1278,14 @@ void actThrown(Entity* my)
 					{
 						doSkillIncrease = false; // no skill for killing/hurting players
 					}
-					int chance = 5;
+
+					int chance = 50; // fskin note: increased from 5
+
+					if (parent && parent->getStats()->getProficiency(PRO_RANGED) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+					{
+						chance = 12;
+					}
+
 					if ( doSkillIncrease && (local_rng.rand() % chance == 0) && parent && parent->getStats() )
 					{
 						if ( hitstats->type != DUMMYBOT 
