@@ -49,7 +49,7 @@ void initInsectoid(Entity* my, Stat* myStats)
 		    }
 			if ( !strncmp(map.name, "Sokoban", 7) || !strncmp(map.name, "The Labyrinth", 13) )
 			{
-				strcpy(myStats->name, "lesser insectoid");
+				strcpy(myStats->name, "insectoid raider");
 			}
 			if ( !myStats->leader_uid )
 			{
@@ -57,23 +57,23 @@ void initInsectoid(Entity* my, Stat* myStats)
 			}
 
 			bool lesserMonster = false;
-			if ( !strncmp(myStats->name, "lesser insectoid", strlen("lesser insectoid")) )
+			if ( !strncmp(myStats->name, "insectoid raider", strlen("insectoid raider")) )
 			{
 				lesserMonster = true;
-				myStats->HP = 110;
+				myStats->HP = 220;
 				myStats->MAXHP = myStats->HP;
 				myStats->RANDOM_MAXHP = 10;
 				myStats->RANDOM_HP = myStats->RANDOM_MAXHP;
 				myStats->OLDHP = myStats->HP;
-				myStats->STR = 8;
+				myStats->STR = 13;
 				myStats->RANDOM_STR = 0;
-				myStats->DEX = 6;
-				myStats->CON = 7;
+				myStats->DEX = 8;
+				myStats->CON = 9;
 				myStats->INT = -2;
 				myStats->PER = 5;
 				myStats->CHR = 5;
 				myStats->EXP = 0;
-				myStats->LVL = 10;
+				myStats->LVL = 15;
 			}
 			// apply random stat increases if set in stat_shared.cpp or editor
 			setRandomMonsterStats(myStats, rng);
