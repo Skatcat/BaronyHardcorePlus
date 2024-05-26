@@ -97,7 +97,7 @@ void initSpider(Entity* my, Stat* myStats)
 				myStats->LVL = 15;
 				newItem(RING_INVISIBILITY, EXCELLENT, -5, 1, rng.rand(), false, &myStats->inventory);
 				int status = DECREPIT + (currentlevel > 5) + (currentlevel > 15) + (currentlevel > 20);
-				newItem(ARTIFACT_SWORD, static_cast<Status>(status), 1, 1, rng.rand(), false, &myStats->inventory);
+				newItem(ARTIFACT_SWORD, static_cast<Status>(status), -1, 1, rng.rand(), false, &myStats->inventory); //fskin note: changed Dyrnwyn beatitude to cursed
 				customItemsToGenerate -= 2;
 				int c;
 				for ( c = 0; c < 3; c++ )
