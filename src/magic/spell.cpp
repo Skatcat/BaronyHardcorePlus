@@ -46,6 +46,9 @@ spellElement_t spellElement_slow;
 spellElement_t spellElement_levitation;
 spellElement_t spellElement_teleportation;
 spellElement_t spellElement_magicmissile;
+spellElement_t spellElement_annihilateundead;
+spellElement_t spellElement_annihilatemonstrosities;
+spellElement_t spellElement_annihilatehellspawn;
 spellElement_t spellElement_removecurse;
 spellElement_t spellElement_summon;
 spellElement_t spellElement_stoneblood;
@@ -78,6 +81,9 @@ spellElement_t spellElement_ghostBolt;
 
 spell_t spell_forcebolt;
 spell_t spell_magicmissile;
+spell_t spell_annihilateundead;
+spell_t spell_annihilatemonstrosities;
+spell_t spell_annihilatehellspawn;
 spell_t spell_cold;
 spell_t spell_fireball;
 spell_t spell_lightning;
@@ -150,6 +156,15 @@ bool addSpell(int spell, int player, bool ignoreSkill)
 			break;
 		case SPELL_MAGICMISSILE:
 			new_spell = copySpell(&spell_magicmissile);
+			break;
+		  case SPELL_ANNIHILATEUNDEAD:
+			new_spell = copySpell(&spell_annihilateundead);
+			break;
+		  case SPELL_ANNIHILATEMONSTROSITIES:
+			new_spell = copySpell(&spell_annihilatemonstrosities);
+			break;
+		  case SPELL_ANNIHILATEHELLSPAWN:
+			new_spell = copySpell(&spell_annihilatehellspawn);
 			break;
 		case SPELL_COLD:
 			new_spell = copySpell(&spell_cold);
@@ -760,6 +775,15 @@ spell_t* getSpellFromID(int ID)
 		case SPELL_MAGICMISSILE:
 			spell = &spell_magicmissile;
 			break;
+		case SPELL_ANNIHILATEUNDEAD:
+			spell = &spell_annihilateundead;
+			break;
+		case SPELL_ANNIHILATEMONSTROSITIES:
+			spell = &spell_annihilatemonstrosities;
+			break;
+		case SPELL_ANNIHILATEHELLSPAWN:
+			spell = &spell_annihilatehellspawn;
+			break;
 		case SPELL_COLD:
 			spell = &spell_cold;
 			break;
@@ -940,6 +964,15 @@ int getSpellbookFromSpellID(int spellID)
 		case SPELL_MAGICMISSILE:
 			itemType = SPELLBOOK_MAGICMISSILE;
 			break;
+		case SPELL_ANNIHILATEUNDEAD:
+			itemType = SPELLBOOK_ANNIHILATEUNDEAD;
+			break;
+		case SPELL_ANNIHILATEMONSTROSITIES:
+			itemType = SPELLBOOK_ANNIHILATEMONSTROSITIES;
+			break;
+		case SPELL_ANNIHILATEHELLSPAWN:
+			itemType = SPELLBOOK_ANNIHILATEHELLSPAWN;
+			break;
 		case SPELL_COLD:
 			itemType = SPELLBOOK_COLD;
 			break;
@@ -1114,6 +1147,12 @@ int getSpellIDFromSpellbook(int spellbookType)
 			return spell_forcebolt.ID;
 		case SPELLBOOK_MAGICMISSILE:
 			return spell_magicmissile.ID;
+		case SPELLBOOK_ANNIHILATEUNDEAD:
+			return spell_annihilateundead.ID;
+		case SPELLBOOK_ANNIHILATEMONSTROSITIES:
+			return spell_annihilatemonstrosities.ID;
+		case SPELLBOOK_ANNIHILATEHELLSPAWN:
+			return spell_annihilatehellspawn.ID;
 		case SPELLBOOK_COLD:
 			return spell_cold.ID;
 		case SPELLBOOK_FIREBALL:
