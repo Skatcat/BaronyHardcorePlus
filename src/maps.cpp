@@ -1033,9 +1033,13 @@ int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int, int> 
 		{
 			secretlevelexit = 5;
 		}
-		else if ( currentlevel == 33 )
+		else if ( currentlevel == 32 ) //fskin note: ozyx on level 32
 		{
 			secretlevelexit = 6;
+		}
+		else if (currentlevel == 34) //fskin note: skytown on level 34
+		{
+			secretlevelexit = 8;
 		}
 	}
 
@@ -1678,6 +1682,9 @@ int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int, int> 
 						break;
 					case 6:
 						strcpy(secretmapname, "citadelsecret");
+						break;
+					case 8:
+						strcpy(secretmapname, "citadelsecret1"); //fskin note: new secret level entrance
 						break;
 					case 7:
 						strcpy(secretmapname, levelset);
