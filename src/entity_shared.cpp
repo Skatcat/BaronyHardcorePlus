@@ -161,7 +161,7 @@ int checkSpriteType(Sint32 sprite)
 	return 0;
 }
 
-char itemNameStrings[NUM_ITEM_STRINGS][32] =
+char itemNameStrings[NUM_ITEM_STRINGS][34] =
 {
 	"NULL",
 	"random_item",
@@ -494,10 +494,14 @@ char itemNameStrings[NUM_ITEM_STRINGS][32] =
 	"hat_hood_apprentice",
 	"hat_hood_assassin",
 	"hat_hood_whispers",
+	"artifact_shield",
+	"spellbook_annihilateundead",
+	"spellbook_annihilatemonstrosities",
+	"spellbook_annihilatehellspawn",
 	""
 };
 
-char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][32] =
+char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][34] =
 {
 	{
 		"NULL",
@@ -671,6 +675,9 @@ char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][32] =
 		"artifact_orb_red",
 		"artifact_orb_purple",
 		"artifact_orb_green",
+		"spellbook_annihilateundead",
+		"spellbook_annihilatemonstrosities",
+		"spellbook_annihilatehellspawn",
 		""
 	},
 	{
@@ -693,6 +700,7 @@ char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][32] =
 		"quiver_heavy",
 		"quiver_crystal",
 		"quiver_hunting",
+		"artifact_shield",
 		""
 	},
 	{
