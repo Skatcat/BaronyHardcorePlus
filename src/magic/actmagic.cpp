@@ -773,7 +773,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 				}
 			}
 
-			if ( hitFromAbove || (my->actmagicIsVertical != MAGIC_ISVERTICAL_XYZ && dist != sqrt(my->vel_x * my->vel_x + my->vel_y * my->vel_y)) )
+			if (hitFromAbove || (my->actmagicIsVertical != MAGIC_ISVERTICAL_XYZ && dist != sqrt(my->vel_x * my->vel_x + my->vel_y * my->vel_y)))
 			{
 				node = element->elements.first;
 				//element = (spellElement_t *) element->elements->first->element;
@@ -785,17 +785,17 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 
 				// count reflection
 				int reflection = 0;
-				if ( hit.entity )
+				if (hit.entity)
 				{
 					hitstats = hit.entity->getStats();
-					if ( hit.entity->behavior == &actPlayer )
+					if (hit.entity->behavior == &actPlayer)
 					{
 						player = hit.entity->skill[2];
 					}
 				}
-				if ( hitstats )
+				if (hitstats)
 				{
-					if ( parent &&
+					if (parent &&
 						((hit.entity->getRace() == LICH_ICE && parent->getRace() == LICH_FIRE)
 							|| ((hit.entity->getRace() == LICH_FIRE || hitstats->leader_uid == parent->getUID()) && parent->getRace() == LICH_ICE)
 							|| (parent->getRace() == LICH_ICE) && !strncmp(hitstats->name, "corrupted automaton", 19)
@@ -804,32 +804,33 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 					{
 						reflection = 3;
 					}
-					if ( !reflection )
+					if (!reflection)
 					{
 						reflection = hit.entity->getReflection();
 					}
-					if ( my->actmagicCastByTinkerTrap == 1 )
+					if (my->actmagicCastByTinkerTrap == 1)
 					{
 						reflection = 0;
 					}
-					if ( reflection == 3 && hitstats->shield && hitstats->shield->type == MIRROR_SHIELD && hitstats->defending )
+
+					if (reflection == 3 && hitstats->shield && hitstats->shield->type == (MIRROR_SHIELD || ARTIFACT_SHIELD) && hitstats->defending)
 					{
-						if ( my->actmagicIsVertical == MAGIC_ISVERTICAL_Z )
+						if (my->actmagicIsVertical == MAGIC_ISVERTICAL_Z)
 						{
 							reflection = 0;
 						}
 						// calculate facing angle to projectile, need to be facing projectile to reflect.
-						else if ( player >= 0 && players[player] && players[player]->entity )
+						else if (player >= 0 && players[player] && players[player]->entity)
 						{
 							real_t yawDiff = my->yawDifferenceFromEntity(players[player]->entity);
-							if ( yawDiff < (6 * PI / 5) )
+							if (yawDiff < (6 * PI / 5))
 							{
 								reflection = 0;
 							}
 							else
 							{
 								reflection = 3;
-								if ( parent && (parent->behavior == &actMonster || parent->behavior == &actPlayer) )
+								if (parent && (parent->behavior == &actMonster || parent->behavior == &actPlayer))
 								{
 									my->actmagicMirrorReflected = 1;
 									my->actmagicMirrorReflectedCaster = parent->getUID();
@@ -841,56 +842,56 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 
 				bool yourSpellHitsTheMonster = false;
 				bool youAreHitByASpell = false;
-				if ( hit.entity )
+				if (hit.entity)
 				{
-					if ( hit.entity->behavior == &actPlayer )
+					if (hit.entity->behavior == &actPlayer)
 					{
 						bool skipMessage = false;
-						if ( !(svFlags & SV_FLAG_FRIENDLYFIRE) && my->actmagicTinkerTrapFriendlyFire == 0 )
+						if (!(svFlags & SV_FLAG_FRIENDLYFIRE) && my->actmagicTinkerTrapFriendlyFire == 0)
 						{
-							if ( parent && (parent->behavior == &actMonster || parent->behavior == &actPlayer) && parent->checkFriend(hit.entity) )
+							if (parent && (parent->behavior == &actMonster || parent->behavior == &actPlayer) && parent->checkFriend(hit.entity))
 							{
 								skipMessage = true;
 							}
 						}
 
-						if ( my->actmagicCastByTinkerTrap == 1 )
+						if (my->actmagicCastByTinkerTrap == 1)
 						{
 							skipMessage = true;
 						}
-						if ( !skipMessage )
+						if (!skipMessage)
 						{
 							Uint32 color = makeColorRGB(255, 0, 0);
-							if ( reflection == 0 )
+							if (reflection == 0)
 							{
 								messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(376));
 								youAreHitByASpell = true;
 							}
 						}
-						if ( hitstats )
+						if (hitstats)
 						{
 							entityHealth = hitstats->HP;
 						}
 					}
-					if ( parent && hitstats )
+					if (parent && hitstats)
 					{
-						if ( parent->behavior == &actPlayer )
+						if (parent->behavior == &actPlayer)
 						{
 							Uint32 color = makeColorRGB(0, 255, 0);
-							if ( strcmp(element->element_internal_name, spellElement_charmMonster.element_internal_name) )
+							if (strcmp(element->element_internal_name, spellElement_charmMonster.element_internal_name))
 							{
-								if ( my->actmagicCastByTinkerTrap == 1 )
+								if (my->actmagicCastByTinkerTrap == 1)
 								{
 									//messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3498), Language::get(3499), MSG_COMBAT);
 								}
 								else
 								{
-									if ( reflection == 0 )
+									if (reflection == 0)
 									{
 										yourSpellHitsTheMonster = true;
-										if ( !hit.entity->isInertMimic() )
+										if (!hit.entity->isInertMimic())
 										{
-											if ( ItemTooltips.bSpellHasBasicHitMessage(spell->ID) )
+											if (ItemTooltips.bSpellHasBasicHitMessage(spell->ID))
 											{
 												messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(378), Language::get(377), MSG_COMBAT_BASIC);
 											}
@@ -907,18 +908,18 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 				}
 
 				// Handling reflecting the missile
-				if ( reflection )
+				if (reflection)
 				{
 					spell_t* spellIsReflectingMagic = nullptr;
-					if ( hit.entity )
+					if (hit.entity)
 					{
 						spellIsReflectingMagic = hit.entity->getActiveMagicEffect(SPELL_REFLECT_MAGIC);
 						playSoundEntity(hit.entity, 166, 128);
-						if ( hit.entity->behavior == &actPlayer )
+						if (hit.entity->behavior == &actPlayer)
 						{
-							if ( youAreHitByASpell )
+							if (youAreHitByASpell)
 							{
-								if ( !spellIsReflectingMagic )
+								if (!spellIsReflectingMagic)
 								{
 									messagePlayer(player, MESSAGE_COMBAT, Language::get(379)); // but it bounces off!
 								}
@@ -933,40 +934,40 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 							}
 						}
 					}
-					if ( parent && hitstats )
+					if (parent && hitstats)
 					{
-						if ( parent->behavior == &actPlayer )
+						if (parent->behavior == &actPlayer)
 						{
-							if ( yourSpellHitsTheMonster )
+							if (yourSpellHitsTheMonster)
 							{
 								messagePlayer(parent->skill[2], MESSAGE_COMBAT, Language::get(379)); // but it bounces off!
 							}
 							else
 							{
-								messagePlayerMonsterEvent(parent->skill[2], makeColorRGB(255, 255, 255), 
+								messagePlayerMonsterEvent(parent->skill[2], makeColorRGB(255, 255, 255),
 									*hitstats, Language::get(4322), Language::get(4323), MSG_COMBAT); // your spell bounces off the monster!
 							}
 						}
 					}
-					if ( hit.side == HORIZONTAL )
+					if (hit.side == HORIZONTAL)
 					{
 						my->vel_x *= -1;
 						my->yaw = atan2(my->vel_y, my->vel_x);
 					}
-					else if ( hit.side == VERTICAL )
+					else if (hit.side == VERTICAL)
 					{
 						my->vel_y *= -1;
 						my->yaw = atan2(my->vel_y, my->vel_x);
 					}
-					else if ( hit.side == 0 )
+					else if (hit.side == 0)
 					{
 						my->vel_x *= -1;
 						my->vel_y *= -1;
 						my->yaw = atan2(my->vel_y, my->vel_x);
 					}
-					if ( hit.entity )
+					if (hit.entity)
 					{
-						if ( (parent && parent->behavior == &actMagicTrapCeiling) || my->actmagicIsVertical == MAGIC_ISVERTICAL_Z )
+						if ((parent && parent->behavior == &actMagicTrapCeiling) || my->actmagicIsVertical == MAGIC_ISVERTICAL_Z)
 						{
 							// this missile came from the ceiling, let's redirect it..
 							my->x = hit.entity->x + cos(hit.entity->yaw);
@@ -982,13 +983,28 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 						++my->actmagicReflectionCount;
 					}
 
+
+					// fskin note: The Artifact Shield drains MP per reflection.
+
+					if (hit.entity)
+					{
+						if (hit.entity->behavior == &actPlayer)
+						{
+					 		hitstats = hit.entity->getStats();
+					 		if (reflection == 3 && hitstats->shield->type == ARTIFACT_SHIELD && hitstats->defending)
+					 		{
+					 			hit.entity->drainMP(10, false);
+					 		}
+						}
+					}
+
 					// Only degrade the equipment if Friendly Fire is ON or if it is (OFF && target is an enemy)
 					bool bShouldEquipmentDegrade = false;
-					if ( parent && parent->behavior == &actDeathGhost )
+					if (parent && parent->behavior == &actDeathGhost)
 					{
 						bShouldEquipmentDegrade = false;
 					}
-					else if ( (svFlags & SV_FLAG_FRIENDLYFIRE) )
+					else if ((svFlags & SV_FLAG_FRIENDLYFIRE))
 					{
 						// Friendly Fire is ON, equipment should always degrade, as hit will register
 						bShouldEquipmentDegrade = true;
@@ -996,49 +1012,49 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 					else
 					{
 						// Friendly Fire is OFF, is the target an enemy?
-						if ( parent != nullptr && (parent->checkFriend(hit.entity)) == false )
+						if (parent != nullptr && (parent->checkFriend(hit.entity)) == false)
 						{
 							// Target is an enemy, equipment should degrade
 							bShouldEquipmentDegrade = true;
 						}
 					}
 
-					if ( bShouldEquipmentDegrade )
+					if (bShouldEquipmentDegrade)
 					{
 						// Reflection of 3 does not degrade equipment
-						if ( local_rng.rand() % 2 == 0 && hitstats && reflection < 3 )
+						if (local_rng.rand() % 2 == 0 && hitstats && reflection < 3)
 						{
 							// set armornum to the relevant equipment slot to send to clients
 							int armornum = 5 + reflection;
-							if ( (player >= 0 && players[player]->isLocalPlayer()) || player < 0 )
+							if ((player >= 0 && players[player]->isLocalPlayer()) || player < 0)
 							{
-								if ( reflection == 1 )
+								if (reflection == 1)
 								{
-									if ( hitstats->cloak->count > 1 )
+									if (hitstats->cloak->count > 1)
 									{
 										newItem(hitstats->cloak->type, hitstats->cloak->status, hitstats->cloak->beatitude, hitstats->cloak->count - 1, hitstats->cloak->appearance, hitstats->cloak->identified, &hitstats->inventory);
 									}
 								}
-								else if ( reflection == 2 )
+								else if (reflection == 2)
 								{
-									if ( hitstats->amulet->count > 1 )
+									if (hitstats->amulet->count > 1)
 									{
 										newItem(hitstats->amulet->type, hitstats->amulet->status, hitstats->amulet->beatitude, hitstats->amulet->count - 1, hitstats->amulet->appearance, hitstats->amulet->identified, &hitstats->inventory);
 									}
 								}
-								else if ( reflection == -1 )
+								else if (reflection == -1)
 								{
-									if ( hitstats->shield->count > 1 )
+									if (hitstats->shield->count > 1)
 									{
 										newItem(hitstats->shield->type, hitstats->shield->status, hitstats->shield->beatitude, hitstats->shield->count - 1, hitstats->shield->appearance, hitstats->shield->identified, &hitstats->inventory);
 									}
 								}
 							}
-							if ( reflection == 1 )
+							if (reflection == 1)
 							{
 								hitstats->cloak->count = 1;
 								hitstats->cloak->status = static_cast<Status>(std::max(static_cast<int>(BROKEN), hitstats->cloak->status - 1));
-								if ( hitstats->cloak->status != BROKEN )
+								if (hitstats->cloak->status != BROKEN)
 								{
 									messagePlayer(player, MESSAGE_EQUIPMENT, Language::get(380));
 								}
@@ -1048,11 +1064,11 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 									playSoundEntity(hit.entity, 76, 64);
 								}
 							}
-							else if ( reflection == 2 )
+							else if (reflection == 2)
 							{
 								hitstats->amulet->count = 1;
 								hitstats->amulet->status = static_cast<Status>(std::max(static_cast<int>(BROKEN), hitstats->amulet->status - 1));
-								if ( hitstats->amulet->status != BROKEN )
+								if (hitstats->amulet->status != BROKEN)
 								{
 									messagePlayer(player, MESSAGE_EQUIPMENT, Language::get(382));
 								}
@@ -1062,11 +1078,11 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 									playSoundEntity(hit.entity, 76, 64);
 								}
 							}
-							else if ( reflection == -1 )
+							else if (reflection == -1)
 							{
 								hitstats->shield->count = 1;
 								hitstats->shield->status = static_cast<Status>(std::max(static_cast<int>(BROKEN), hitstats->shield->status - 1));
-								if ( hitstats->shield->status != BROKEN )
+								if (hitstats->shield->status != BROKEN)
 								{
 									messagePlayer(player, MESSAGE_EQUIPMENT, Language::get(384));
 								}
@@ -1076,15 +1092,15 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 									playSoundEntity(hit.entity, 76, 64);
 								}
 							}
-							if ( player > 0 && multiplayer == SERVER && !players[player]->isLocalPlayer() )
+							if (player > 0 && multiplayer == SERVER && !players[player]->isLocalPlayer())
 							{
 								strcpy((char*)net_packet->data, "ARMR");
 								net_packet->data[4] = armornum;
-								if ( reflection == 1 )
+								if (reflection == 1)
 								{
 									net_packet->data[5] = hitstats->cloak->status;
 								}
-								else if ( reflection == 2 )
+								else if (reflection == 2)
 								{
 									net_packet->data[5] = hitstats->amulet->status;
 								}
@@ -1100,11 +1116,11 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 						}
 					}
 
-					if ( spellIsReflectingMagic )
+					if (spellIsReflectingMagic)
 					{
 						int spellCost = getCostOfSpell(spell);
 						bool unsustain = false;
-						if ( spellCost >= hit.entity->getMP() ) //Unsustain the spell if expended all mana.
+						if (spellCost >= hit.entity->getMP()) //Unsustain the spell if expended all mana.
 						{
 							unsustain = true;
 						}
@@ -1113,10 +1129,10 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 						spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z / 2, 174);
 						playSoundEntity(hit.entity, 166, 128); //TODO: Custom sound effect?
 
-						if ( unsustain )
+						if (unsustain)
 						{
 							spellIsReflectingMagic->sustain = false;
-							if ( hitstats )
+							if (hitstats)
 							{
 								hit.entity->setEffect(EFF_MAGICREFLECT, false, 0, true);
 								messagePlayer(player, MESSAGE_STATUS, Language::get(2476));
@@ -1124,7 +1140,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 						}
 					}
 
-					if ( my->actmagicReflectionCount >= 3 )
+					if (my->actmagicReflectionCount >= 3)
 					{
 						my->removeLightField();
 						list_RemoveNode(my->mynode);
@@ -1134,15 +1150,15 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 				}
 
 				// Test for Friendly Fire, if Friendly Fire is OFF, delete the missile
-				if ( !(svFlags & SV_FLAG_FRIENDLYFIRE) )
+				if (!(svFlags & SV_FLAG_FRIENDLYFIRE))
 				{
-					if ( !strcmp(element->element_internal_name, spellElement_telePull.element_internal_name)
+					if (!strcmp(element->element_internal_name, spellElement_telePull.element_internal_name)
 						|| !strcmp(element->element_internal_name, spellElement_shadowTag.element_internal_name)
-						|| my->actmagicTinkerTrapFriendlyFire == 1 )
+						|| my->actmagicTinkerTrapFriendlyFire == 1)
 					{
 						// these spells can hit allies no penalty.
 					}
-					else if ( parent && parent->checkFriend(hit.entity) )
+					else if (parent && parent->checkFriend(hit.entity))
 					{
 						my->removeLightField();
 						list_RemoveNode(my->mynode);
@@ -1151,7 +1167,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 				}
 
 				int trapResist = 0;
-				if ( parent && (parent->behavior == &actMagicTrap || parent->behavior == &actMagicTrapCeiling) )
+				if (parent && (parent->behavior == &actMagicTrap || parent->behavior == &actMagicTrapCeiling))
 				{
 					trapResist = hit.entity ? hit.entity->getFollowerBonusTrapResist() : 0;
 				}
@@ -3110,6 +3126,177 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 							}
 							spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my->sprite);
 						}
+					}
+				}
+				else if (!strcmp(element->element_internal_name, spellElement_annihilateundead.element_internal_name)) // fskin note: new spell
+				{
+					if (hit.entity)
+					{
+						if ((hit.entity->behavior == &actMonster || hit.entity->behavior == &actPlayer)
+						&& (hit.entity->getRace() == SKELETON
+						|| hit.entity->getRace() == LICH
+						|| hit.entity->getRace() == LICH_ICE
+						|| hit.entity->getRace() == LICH_FIRE
+						|| hit.entity->getRace() == GHOUL))
+						{
+							spawnExplosion(my->x, my->y, my->z);
+							Entity* parent = uidToEntity(my->parent);
+							playSoundEntity(hit.entity, 28, 128);
+							int damage = element->damage;
+							damage += (spellbookDamageBonus * damage);
+							//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
+				 
+							damage *= damageMultiplier;
+							damage /= (1 + (int)resistance);
+							hit.entity->modHP(-damage);
+							for (i = 0; i < damage; i += 16)   //Spawn a gib for every two points of damage.
+							{
+								Entity* gib = spawnGib(hit.entity);
+								serverSpawnGibForClient(gib);
+							}
+
+							// write the obituary
+							if (parent)
+							{
+								parent->killedByMonsterObituary(hit.entity);
+							}
+
+							// update enemy bar for attacker
+							if (!strcmp(hitstats->name, ""))
+							{
+								updateEnemyBar(parent, hit.entity, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP,
+									false, dmgGib);
+							}
+							else
+							{
+								updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP,
+									false, dmgGib);
+							}
+
+							if (hitstats->HP <= 0 && parent)
+							{
+								parent->awardXP(hit.entity, true, true);
+								spawnBloodVialOnMonsterDeath(hit.entity, hitstats, parent);
+							}
+						}
+							else spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my->sprite);
+						}
+					}
+				else if (!strcmp(element->element_internal_name, spellElement_annihilatemonstrosities.element_internal_name)) // fskin note: new spell
+				{
+					if (hit.entity)
+					{
+						if ((hit.entity->behavior == &actMonster || hit.entity->behavior == &actPlayer)
+							&& (hit.entity->getRace() == SHADOW
+								|| hit.entity->getRace() == VAMPIRE
+								|| hit.entity->getRace() == COCKATRICE
+								|| hit.entity->getRace() == MINOTAUR
+								|| hit.entity->getRace() == SPIDER
+								|| hit.entity->getRace() == CRYSTALGOLEM
+								|| hit.entity->getRace() == KOBOLD
+								|| hit.entity->getRace() == TROLL
+								|| hit.entity->getRace() == INSECTOID
+								|| hit.entity->getRace() == SCARAB
+								|| hit.entity->getRace() == SCORPION
+								|| hit.entity->getRace() == GOBLIN
+								|| hit.entity->getRace() == MIMIC))
+						{
+							spawnExplosion(my->x, my->y, my->z);
+							Entity* parent = uidToEntity(my->parent);
+							playSoundEntity(hit.entity, 28, 128);
+							int damage = element->damage;
+							damage += (spellbookDamageBonus * damage);
+							//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
+
+							damage *= damageMultiplier;
+							damage /= (1 + (int)resistance);
+							hit.entity->modHP(-damage);
+							for (i = 0; i < damage; i += 16)   //Spawn a gib for every two points of damage.
+							{
+								Entity* gib = spawnGib(hit.entity);
+								serverSpawnGibForClient(gib);
+							}
+
+							// write the obituary
+							if (parent)
+							{
+								parent->killedByMonsterObituary(hit.entity);
+							}
+
+							// update enemy bar for attacker
+							if (!strcmp(hitstats->name, ""))
+							{
+								updateEnemyBar(parent, hit.entity, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP,
+									false, dmgGib);
+							}
+							else
+							{
+								updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP,
+									false, dmgGib);
+							}
+
+							if (hitstats->HP <= 0 && parent)
+							{
+								parent->awardXP(hit.entity, true, true);
+								spawnBloodVialOnMonsterDeath(hit.entity, hitstats, parent);
+							}
+						}
+						else spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my->sprite);
+					}
+				}
+				else if (!strcmp(element->element_internal_name, spellElement_annihilatehellspawn.element_internal_name)) // fskin note: new spell
+				{
+					if (hit.entity)
+					{
+						if ((hit.entity->behavior == &actMonster || hit.entity->behavior == &actPlayer)
+							&& (hit.entity->getRace() == DEVIL
+								|| hit.entity->getRace() == DEMON
+								|| hit.entity->getRace() == INCUBUS
+								|| hit.entity->getRace() == SUCCUBUS
+								|| hit.entity->getRace() == CREATURE_IMP
+								|| hit.entity->getRace() == GOATMAN))
+						{
+							spawnExplosion(my->x, my->y, my->z);
+							Entity* parent = uidToEntity(my->parent);
+							playSoundEntity(hit.entity, 28, 128);
+							int damage = element->damage;
+							damage += (spellbookDamageBonus * damage);
+							//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
+
+							damage *= damageMultiplier;
+							damage /= (1 + (int)resistance);
+							hit.entity->modHP(-damage);
+							for (i = 0; i < damage; i += 16)   //Spawn a gib for every two points of damage.
+							{
+								Entity* gib = spawnGib(hit.entity);
+								serverSpawnGibForClient(gib);
+							}
+
+							// write the obituary
+							if (parent)
+							{
+								parent->killedByMonsterObituary(hit.entity);
+							}
+
+							// update enemy bar for attacker
+							if (!strcmp(hitstats->name, ""))
+							{
+								updateEnemyBar(parent, hit.entity, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP,
+									false, dmgGib);
+							}
+							else
+							{
+								updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP,
+									false, dmgGib);
+							}
+
+							if (hitstats->HP <= 0 && parent)
+							{
+								parent->awardXP(hit.entity, true, true);
+								spawnBloodVialOnMonsterDeath(hit.entity, hitstats, parent);
+							}
+						}
+						else spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my->sprite);
 					}
 				}
 				else if ( !strcmp(element->element_internal_name, spellElement_bleed.element_internal_name) )
