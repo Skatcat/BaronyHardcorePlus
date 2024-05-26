@@ -2941,7 +2941,7 @@ void Entity::handleEffects(Stat* myStats)
 			myStats->MAXMP += MP_MOD;
 			if ( behavior == &actPlayer && myStats->playerRace == RACE_INSECTOID && myStats->appearance == 0 )
 			{
-				myStats->MAXMP = std::min(50, myStats->MAXMP);
+				myStats->MAXMP = std::min(100, myStats->MAXMP); // fskin note: increased Insectoid max MP to 100
 				if ( svFlags & SV_FLAG_HUNGER )
 				{
 					Sint32 hungerPointPerMana = playerInsectoidHungerValueOfManaPoint(*myStats);
@@ -8486,72 +8486,99 @@ void Entity::attack(int pose, int charge, Entity* target)
 					{
 						doSkillIncrease = false; // no skill for killing/hurting players
 					}
-					if ( doSkillIncrease
-						&& ((weaponskill >= PRO_SWORD && weaponskill <= PRO_POLEARM) || weaponskill == PRO_UNARMED || (whip && weaponskill == PRO_RANGED)) )
-					{
-						if ( myStats->weapon &&
-							(myStats->weapon->type == CRYSTAL_BATTLEAXE
-								|| myStats->weapon->type == CRYSTAL_MACE
-								|| myStats->weapon->type == CRYSTAL_SWORD
-								|| myStats->weapon->type == CRYSTAL_SPEAR) )
-						{
-							int chance = 6;
-							bool notify = true;
-							if ( myStats->type == GOBLIN )
-							{
-								chance = 10;
-								notify = true;
-							}
 
-							if ( local_rng.rand() % chance == 0 )
+						if (doSkillIncrease
+							&& ((weaponskill >= PRO_SWORD && weaponskill <= PRO_POLEARM) || weaponskill == PRO_UNARMED || (whip && weaponskill == PRO_RANGED)))
+						{
+							if (myStats->weapon &&
+								(myStats->weapon->type == CRYSTAL_BATTLEAXE
+									|| myStats->weapon->type == CRYSTAL_MACE
+									|| myStats->weapon->type == CRYSTAL_SWORD
+									|| myStats->weapon->type == CRYSTAL_SPEAR))
 							{
-								if ( hitstats->type != DUMMYBOT || (hitstats->type == DUMMYBOT && myStats->getProficiency(weaponskill) < SKILL_LEVEL_BASIC) )
+								int chance = 20; //fskin note: increased from 6
+								if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+								{
+									chance = 12;
+								}
+								bool notify = true;
+								if (myStats->type == GOBLIN)
+								{
+									chance = 25; //fskin note: increased from 10
+									if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+									{
+										chance = 16;
+									}
+									notify = true;
+								}
+
+								if (local_rng.rand() % chance == 0)
+								{
+									if (hitstats->type != DUMMYBOT || (hitstats->type == DUMMYBOT && myStats->getProficiency(weaponskill) < SKILL_LEVEL_BASIC))
+									{
+										this->increaseSkill(weaponskill, notify);
+										skillIncreased = true;
+									}
+								}
+							}
+							else if (hitstats->HP <= 0)
+							{
+								if (player >= 0 && weaponskill == PRO_UNARMED
+									&& stats[player]->type == GOATMAN
+									&& stats[player]->EFFECTS[EFF_DRUNK])
+								{
+									steamStatisticUpdateClient(player, STEAM_STAT_BARFIGHT_CHAMP, STEAM_STAT_INT, 1);
+								}
+								int chance = 32; //fskin note: increased from 8
+								if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+								{
+									chance = 10;
+								}
+								bool notify = true;
+								if (myStats->type == GOBLIN)
+								{
+									chance = 38; //fskin note: increased from 12
+									if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+									{
+										chance = 14;
+									}
+									notify = true;
+								}
+								if (local_rng.rand() % chance == 0)
 								{
 									this->increaseSkill(weaponskill, notify);
 									skillIncreased = true;
 								}
 							}
-						}
-						else if ( hitstats->HP <= 0 )
-						{
-							if ( player >= 0 && weaponskill == PRO_UNARMED 
-								&& stats[player]->type == GOATMAN
-								&& stats[player]->EFFECTS[EFF_DRUNK] )
+							else
 							{
-								steamStatisticUpdateClient(player, STEAM_STAT_BARFIGHT_CHAMP, STEAM_STAT_INT, 1);
-							}
-							int chance = 8;
-							bool notify = true;
-							if ( myStats->type == GOBLIN )
-							{
-								chance = 12;
-								notify = true;
-							}
-							if ( local_rng.rand() % chance == 0 )
-							{
-								this->increaseSkill(weaponskill, notify);
-								skillIncreased = true;
-							}
-						}
-						else
-						{
-							int chance = 10;
-							bool notify = true;
-							if ( myStats->type == GOBLIN && weaponskill != PRO_RANGED )
-							{
-								chance = 14;
-								notify = true;
-							}
-							if ( local_rng.rand() % chance == 0 )
-							{
-								if ( hitstats->type != DUMMYBOT || (hitstats->type == DUMMYBOT && myStats->getProficiency(weaponskill) < SKILL_LEVEL_BASIC) )
+								int chance = 35; //fskin note: increased from 10
+								if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
 								{
-									this->increaseSkill(weaponskill, notify);
-									skillIncreased = true;
+									chance = 12;
+								}
+								bool notify = true;
+								if (myStats->type == GOBLIN && weaponskill != PRO_RANGED)
+								{
+									chance = 40; //fskin note: increased from 14
+									if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+									{
+										chance = 16;
+									}
+									notify = true;
+								}
+								if (local_rng.rand() % chance == 0)
+								{
+									if (hitstats->type != DUMMYBOT || (hitstats->type == DUMMYBOT && myStats->getProficiency(weaponskill) < SKILL_LEVEL_BASIC))
+									{
+										this->increaseSkill(weaponskill, notify);
+										skillIncreased = true;
+									}
 								}
 							}
 						}
-					}
+				//	}
+					
 
 					if ( skillIncreased && myStats->type == GOBLIN && weaponskill != PRO_RANGED )
 					{
@@ -8809,7 +8836,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 							}
 							if ( skillCapstoneUnlocked(hit.entity->skill[2], PRO_SHIELD) )
 							{
-								armorDegradeChance = 100; // don't break.
+								armorDegradeChance -= 5; // don't break. // fskin note: lower break chance for legendary shield bonus
 							}
 						}
 
@@ -8872,6 +8899,23 @@ void Entity::attack(int pose, int charge, Entity* target)
 								if ( (local_rng.rand() % 15 == 0 && damage > 0) || (damage == 0 && local_rng.rand() % 8 == 0) )
 								{
 									bool increaseSkill = true;
+
+									bool advshield = false;
+
+									if (hitstats->shield->type == STEEL_SHIELD
+										|| hitstats->shield->type == STEEL_SHIELD_RESISTANCE
+										|| hitstats->shield->type == ARTIFACT_SHIELD
+										|| hitstats->shield->type == CRYSTAL_SHIELD)
+									{
+										advshield = 1;
+									} // fskin note: you need advanced shields to skill blocking past 80
+
+									if ( advshield == false
+										&& hitstats->getProficiency(PRO_SHIELD) >= SKILL_LEVEL_MASTER)
+									{
+										increaseSkill = false;
+									}
+
 									if ( hit.entity->behavior == &actPlayer && behavior == &actPlayer )
 									{
 										increaseSkill = false;
@@ -8885,9 +8929,9 @@ void Entity::attack(int pose, int charge, Entity* target)
 										increaseSkill = false;
 									}
 									else if ( itemCategory(hitstats->shield) != ARMOR
-										&& hitstats->getProficiency(PRO_SHIELD) >= SKILL_LEVEL_SKILLED )
+										&& hitstats->getProficiency(PRO_SHIELD) >= SKILL_LEVEL_NOVICE )
 									{
-										increaseSkill = false; // non-shield offhands dont increase skill past 40.
+										increaseSkill = false; // fskin note: non-shield offhands dont increase skill past 20.
 									}
 									if ( increaseSkill )
 									{
@@ -8917,7 +8961,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 								}
 								if ( skillCapstoneUnlocked(hit.entity->skill[2], PRO_SHIELD) )
 								{
-									shieldDegradeChance = 100; // don't break.
+									shieldDegradeChance -= 5; // don't break. // fskin note: lower break chance for legendary shield bonus
 								}
 							}
 							if ( shieldDegradeChance < 100 && armor == NULL &&
@@ -13543,6 +13587,7 @@ int checkEquipType(const Item *item)
 		case STEEL_SHIELD:
 		case STEEL_SHIELD_RESISTANCE:
 		case MIRROR_SHIELD:
+		case ARTIFACT_SHIELD: //fskin note: new item
 			return TYPE_SHIELD;
 			break;
 
@@ -14026,10 +14071,11 @@ int Entity::getReflection() const
 
 	if ( stats->shield )
 	{
-		if ( stats->shield->type == MIRROR_SHIELD && stats->defending )
+		if ((stats->shield->type == (MIRROR_SHIELD) || stats->shield->type == (ARTIFACT_SHIELD)) && stats->defending) //fskin note: this guy also reflects but only during defend
 		{
 			return 3;
 		}
+
 	}
 	if ( stats->amulet )
 	{
@@ -17360,7 +17406,9 @@ void Entity::degradeArmor(Stat& hitstats, Item& armor, int armornum)
 		|| armor.type == ARTIFACT_CLOAK
 		|| armor.type == ARTIFACT_GLOVES
 		|| armor.type == ARTIFACT_BREASTPIECE
-		|| armor.type == MASK_ARTIFACT_VISOR )
+		|| armor.type == MASK_ARTIFACT_VISOR
+		|| armor.type == ARTIFACT_SHIELD
+		)
 	{
 		return;
 	}
