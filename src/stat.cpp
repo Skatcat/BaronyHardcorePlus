@@ -110,7 +110,7 @@ Sint32 Stat::getModifiedProficiency(int skill) const
 				equipmentBonus -= 999;
 			}
 		}
-		else if ( (mask->type == MASK_STEEL_VISOR || mask->type == MASK_CRYSTAL_VISOR)
+		else if ( (mask->type == MASK_STEEL_VISOR)
 			&& (skill == PRO_SWORD || skill == PRO_AXE || skill == PRO_POLEARM || skill == PRO_MACE) )
 		{
 			if ( mask->beatitude >= 0 || cursedItemIsBuff )
@@ -122,18 +122,30 @@ Sint32 Stat::getModifiedProficiency(int skill) const
 				equipmentBonus -= abs(mask->beatitude) * 5;
 			}
 		}
-		else if ( (mask->type == MASK_ARTIFACT_VISOR)
-			&& (skill == PRO_SWORD || skill == PRO_AXE || skill == PRO_POLEARM || skill == PRO_MACE) )
+		else if ((mask->type == MASK_CRYSTAL_VISOR)
+			&& (skill == PRO_SWORD || skill == PRO_AXE || skill == PRO_POLEARM || skill == PRO_MACE))
 		{
-			if ( mask->beatitude >= 0 || cursedItemIsBuff )
+			if (mask->beatitude >= 0 || cursedItemIsBuff)
 			{
 				equipmentBonus += std::min(maxEquipmentBonusToSkill, (1 + abs(mask->beatitude)) * 10);
 			}
 			else
 			{
-				equipmentBonus -= abs(mask->beatitude) * 10;
+				equipmentBonus -= abs(mask->beatitude) * 10; // fskin note: buffed to Valkyrie's Veil levels since the latter has a different functionality now
 			}
 		}
+		//else if ( (mask->type == MASK_ARTIFACT_VISOR)
+		//	&& (skill == PRO_SWORD || skill == PRO_AXE || skill == PRO_POLEARM || skill == PRO_MACE) )
+		//{
+		//	if ( mask->beatitude >= 0 || cursedItemIsBuff )
+		//	{
+		//		equipmentBonus += std::min(maxEquipmentBonusToSkill, (1 + abs(mask->beatitude)) * 10);
+		//	}
+		//	else
+		//	{
+		//		equipmentBonus -= abs(mask->beatitude) * 10;
+		//	}
+		//}
 	}
 	if ( helmet )
 	{
@@ -1403,7 +1415,7 @@ int Stat::getActiveShieldBonus(bool checkShield) const
 {
 	if ( !checkShield )
 	{
-		return (5 + (getModifiedProficiency(PRO_SHIELD) / 5));
+		return (5 + (getModifiedProficiency(PRO_SHIELD) / 10));
 	}
 
 	if ( shield )
@@ -1412,7 +1424,7 @@ int Stat::getActiveShieldBonus(bool checkShield) const
 		{
 			return 0;
 		}
-		return (5 + (getModifiedProficiency(PRO_SHIELD) / 5));
+		return (5 + (getModifiedProficiency(PRO_SHIELD) / 10));
 	}
 	else
 	{
