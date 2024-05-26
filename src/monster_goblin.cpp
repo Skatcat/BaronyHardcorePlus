@@ -79,7 +79,7 @@ void initGoblin(Entity* my, Stat* myStats)
 				myStats->OLDHP = myStats->HP;
 				myStats->STR += 6;
 				int status = DECREPIT + (currentlevel > 5) + (currentlevel > 15) + (currentlevel > 20);
-				myStats->weapon = newItem(ARTIFACT_MACE, static_cast<Status>(status), 1, 1, rng.rand(), true, nullptr);
+				myStats->weapon = newItem(ARTIFACT_MACE, static_cast<Status>(status), -1, 1, rng.rand(), true, nullptr); //fskin note: changed Sharur beatitude to cursed
 				myStats->helmet = newItem(HAT_JESTER, SERVICABLE, 3 + rng.rand() % 3, 1, rng.rand(), false, nullptr);
 
 				int c;
