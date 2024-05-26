@@ -1073,6 +1073,12 @@ void actHudWeapon(Entity* my)
 											}
 										}
 
+										// fskin note: Ranged 100 always saves ammo
+										if ( stats[HUDWEAPON_PLAYERNUM]->getModifiedProficiency(PRO_RANGED) == 100 )
+										{
+											artifactBowSaveAmmo = true;
+										}
+
 										if ( artifactBowSaveAmmo )
 										{
 											players[HUDWEAPON_PLAYERNUM]->entity->attack(MONSTER_POSE_RANGED_SHOOT2, 0, nullptr);
@@ -1177,18 +1183,18 @@ void actHudWeapon(Entity* my)
 						{
 							// crossbows
 							bool doAttack = false;
-							if ( throwGimpTimer == 0 )
+							if (throwGimpTimer == 0)
 							{
 								doAttack = true;
 								bool heavyCrossbow = stats[HUDWEAPON_PLAYERNUM]->weapon && stats[HUDWEAPON_PLAYERNUM]->weapon->type == HEAVY_CROSSBOW;
 
-								if ( heavyCrossbow )
+								if (heavyCrossbow && stats[HUDWEAPON_PLAYERNUM]->getModifiedProficiency(PRO_RANGED) != SKILL_LEVEL_LEGENDARY)
 								{
 									doAttack = false;
 									// need to charge up.
-									if ( !bowIsBeingDrawn )
+									if (!bowIsBeingDrawn)
 									{
-										if ( bowFire )
+										if (bowFire)
 										{
 											bowFire = false;
 											doAttack = true;
@@ -1205,45 +1211,63 @@ void actHudWeapon(Entity* my)
 									}
 								}
 
-								if ( doAttack )
+								if (doAttack)
 								{
 									players[HUDWEAPON_PLAYERNUM]->entity->attack(MONSTER_POSE_RANGED_SHOOT1, 0, nullptr);
 									HUDWEAPON_MOVEX = -4;
 
-									// set delay before crossbow can fire again
-									throwGimpTimer = 40;
-									if ( stats[HUDWEAPON_PLAYERNUM]->weapon->type == CROSSBOW )
-									{
-										throwGimpTimer *= rangedAttackGetSpeedModifier(stats[HUDWEAPON_PLAYERNUM]);
+									if (stats[HUDWEAPON_PLAYERNUM]->getModifiedProficiency(PRO_RANGED) != SKILL_LEVEL_LEGENDARY)
+									{	// set delay before crossbow can fire again
+										throwGimpTimer = 40;
+										if (stats[HUDWEAPON_PLAYERNUM]->weapon->type == CROSSBOW)
+										{
+											throwGimpTimer *= rangedAttackGetSpeedModifier(stats[HUDWEAPON_PLAYERNUM]);
+										}
 									}
+									else if (stats[HUDWEAPON_PLAYERNUM]->weapon->type == HEAVY_CROSSBOW)
+									{
+										throwGimpTimer = 40;
+									}
+									else throwGimpTimer = 15; // fskin note: this entire block has our legendary crossbow bonus implementation
 
 									HUDWEAPON_CHOP = CROSSBOW_CHOP_RELOAD_START;
 									HUDWEAPON_CROSSBOW_RELOAD_ANIMATION = CROSSBOW_ANIM_SHOOT;
 
-									if ( heavyCrossbow )
+									if (stats[HUDWEAPON_PLAYERNUM]->getModifiedProficiency(PRO_RANGED) == 100)
+									{
+										HUDWEAPON_CHOP = CROSSBOW_CHOP_RELOAD_ENDING;
+									}
+
+									if (heavyCrossbow && stats[HUDWEAPON_PLAYERNUM]->getModifiedProficiency(PRO_RANGED) != 100)
 									{
 										players[HUDWEAPON_PLAYERNUM]->entity->playerStrafeVelocity = 0.3;
 										players[HUDWEAPON_PLAYERNUM]->entity->playerStrafeDir = players[HUDWEAPON_PLAYERNUM]->entity->yaw + PI;
-										if ( multiplayer != CLIENT )
+										if (multiplayer != CLIENT)
 										{
 											players[HUDWEAPON_PLAYERNUM]->entity->setEffect(EFF_KNOCKBACK, true, 30, false);
 										}
-										if ( players[HUDWEAPON_PLAYERNUM]->entity->skill[3] == 0 )   // debug cam OFF
+										if (players[HUDWEAPON_PLAYERNUM]->entity->skill[3] == 0)   // debug cam OFF
 										{
 											camera_shakex += .06;
 											camera_shakey += 6;
 										}
 									}
 
-									if ( multiplayer == CLIENT )
+									if (heavyCrossbow && stats[HUDWEAPON_PLAYERNUM]->getModifiedProficiency(PRO_RANGED) == 100) //fskin note: this makes it so our arbalest boosts us with legendary ranged
 									{
-										if ( rangedWeaponUseQuiverOnAttack(stats[HUDWEAPON_PLAYERNUM]) )
+										players[HUDWEAPON_PLAYERNUM]->entity->playerStrafeVelocity = 1;
+										players[HUDWEAPON_PLAYERNUM]->entity->playerStrafeDir = players[HUDWEAPON_PLAYERNUM]->entity->yaw + PI;
+									}
+
+									if (multiplayer == CLIENT)
+									{
+										if (rangedWeaponUseQuiverOnAttack(stats[HUDWEAPON_PLAYERNUM]))
 										{
 											Item* quiver = stats[HUDWEAPON_PLAYERNUM]->shield;
 											quiver->count--;
-											if ( quiver->count <= 0 )
+											if (quiver->count <= 0)
 											{
-												if ( quiver->node )
+												if (quiver->node)
 												{
 													list_RemoveNode(quiver->node);
 												}
@@ -1258,59 +1282,59 @@ void actHudWeapon(Entity* my)
 								}
 							}
 
-							if ( !doAttack )
+							if (!doAttack)
 							{
 								// reset animation - this is for weaponswitch animation code to complete while holding attack.
-								if ( HUDWEAPON_MOVEX > 0 )
+								if (HUDWEAPON_MOVEX > 0)
 								{
 									HUDWEAPON_MOVEX = std::max<real_t>(HUDWEAPON_MOVEX - 1, 0.0);
 								}
-								else if ( HUDWEAPON_MOVEX < 0 )
+								else if (HUDWEAPON_MOVEX < 0)
 								{
 									HUDWEAPON_MOVEX = std::min<real_t>(HUDWEAPON_MOVEX + 1, 0.0);
 								}
-								if ( HUDWEAPON_MOVEY > 0 )
+								if (HUDWEAPON_MOVEY > 0)
 								{
 									HUDWEAPON_MOVEY = std::max<real_t>(HUDWEAPON_MOVEY - 1, 0.0);
 								}
-								else if ( HUDWEAPON_MOVEY < 0 )
+								else if (HUDWEAPON_MOVEY < 0)
 								{
 									HUDWEAPON_MOVEY = std::min<real_t>(HUDWEAPON_MOVEY + 1, 0.0);
 								}
-								if ( HUDWEAPON_MOVEZ > 0 )
+								if (HUDWEAPON_MOVEZ > 0)
 								{
 									HUDWEAPON_MOVEZ = std::max<real_t>(HUDWEAPON_MOVEZ - 1, 0.0);
 								}
-								else if ( HUDWEAPON_MOVEZ < 0 )
+								else if (HUDWEAPON_MOVEZ < 0)
 								{
 									HUDWEAPON_MOVEZ = std::min<real_t>(HUDWEAPON_MOVEZ + 1, 0.0);
 								}
-								if ( HUDWEAPON_YAW > -.1 )
+								if (HUDWEAPON_YAW > -.1)
 								{
 									HUDWEAPON_YAW = std::max<real_t>(HUDWEAPON_YAW - .1, -.1);
 								}
-								else if ( HUDWEAPON_YAW < -.1 )
+								else if (HUDWEAPON_YAW < -.1)
 								{
 									HUDWEAPON_YAW = std::min<real_t>(HUDWEAPON_YAW + .1, -.1);
 								}
-								if ( HUDWEAPON_ROLL > 0 )
+								if (HUDWEAPON_ROLL > 0)
 								{
 									HUDWEAPON_ROLL = std::max<real_t>(HUDWEAPON_ROLL - .1, 0.0);
 								}
-								else if ( HUDWEAPON_ROLL < 0 )
+								else if (HUDWEAPON_ROLL < 0)
 								{
 									HUDWEAPON_ROLL = std::min<real_t>(HUDWEAPON_ROLL + .1, 0.0);
 								}
-								if ( HUDWEAPON_PITCH > 0 )
+								if (HUDWEAPON_PITCH > 0)
 								{
 									HUDWEAPON_PITCH = std::max<real_t>(HUDWEAPON_PITCH - .1, 0.0);
 								}
-								else if ( HUDWEAPON_PITCH < 0 )
+								else if (HUDWEAPON_PITCH < 0)
 								{
 									HUDWEAPON_PITCH = std::min<real_t>(HUDWEAPON_PITCH + .1, 0.0);
 								}
 							}
-						}
+							}
 					}
 					else
 					{
