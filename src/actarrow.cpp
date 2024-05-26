@@ -719,7 +719,7 @@ void actArrow(Entity* my)
 						{
 							doSkillIncrease = false; // no skill for killing/hurting players
 						}
-						int chance = 10;
+						int chance = 35; // fskin note: increased from 10
 						if ( doSkillIncrease && (local_rng.rand() % chance == 0) && parent && parent->getStats() )
 						{
 							if ( hitstats->type != DUMMYBOT 
