@@ -59,7 +59,7 @@ void initLich(Entity* my, Stat* myStats)
 				{
 					if ( !client_disconnected[c] )
 					{
-						myStats->MAXHP += 250;
+						myStats->MAXHP += 500;
 					}
 				}
 				myStats->HP = myStats->MAXHP;
@@ -221,28 +221,28 @@ void lichDie(Entity* my)
 
 	//playSoundEntity(my, 94, 128);
 	my->removeLightField();
-	// kill all other monsters on the level
-	for ( node = map.creatures->first; node != nullptr; node = nextnode ) //Only searching for monsters, so don't search full map.entities.
-	{
-		nextnode = node->next;
-		Entity* entity = (Entity*)node->element;
-		if ( entity == my )
-		{
-			continue;
-		}
-		if ( entity->behavior == &actMonster && !entity->monsterAllyGetPlayerLeader() )
-		{
-			spawnExplosion(entity->x, entity->y, entity->z);
-			Stat* stats = entity->getStats();
-			if ( stats )
-			{
-				if ( stats->type != HUMAN )
-				{
-					stats->HP = 0;
-				}
-			}
-		}
-	}
+	// kill all other monsters on the level - fskin note: removed so lich can be implemented in baphomet fight, functionality will be scripted into the map instead
+	// for ( node = map.creatures->first; node != nullptr; node = nextnode ) //Only searching for monsters, so don't search full map.entities.
+	// 	{
+	// 		nextnode = node->next;
+	// 		Entity* entity = (Entity*)node->element;
+	// 		if ( entity == my )
+	// 		{
+	// 			continue;
+	// 		}
+	// 		if ( entity->behavior == &actMonster && !entity->monsterAllyGetPlayerLeader() )
+	// 		{
+	// 			spawnExplosion(entity->x, entity->y, entity->z);
+	// 			Stat* stats = entity->getStats();
+	// 			if ( stats )
+	// 			{
+	// 				if ( stats->type != HUMAN )
+	// 				{
+	// 					stats->HP = 0;
+	// 				}
+	// 			}
+	// 		}
+	// 	}
 	for ( c = 0; c < MAXPLAYERS; c++ )
 	{
 		playSoundPlayer(c, 153, 128);
