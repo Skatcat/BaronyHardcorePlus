@@ -134,7 +134,7 @@ void fireOffSpellAnimation(spellcasting_animation_manager_t* animation_manager, 
 				animation_manager->times_to_circle += (std::min(5, 1 + 2 * (difficulty - casterAbility)));
 			}
 		}
-		else if ( stat->getModifiedProficiency(PRO_SPELLCASTING) >= SPELLCASTING_BEGINNER )
+		else if ( stat->getModifiedProficiency(PRO_SPELLCASTING) >= SPELLCASTING_BEGINNER)
 		{
 			animation_manager->times_to_circle = (spellCost / 20) + 1; //Circle once for every 20 mana the spell costs.
 		}
@@ -397,6 +397,15 @@ void actLeftHandMagic(Entity* my)
 	}
 
 	bool wearingring = false;
+	bool speedcast = false;
+
+	if (stats[HANDMAGIC_PLAYERNUM]->mask != NULL)
+	{
+		if (stats[HANDMAGIC_PLAYERNUM]->mask->type == MASK_ARTIFACT_VISOR)
+		{
+			speedcast = true;
+		}
+	}
 
 	//Select model
 	if (stats[HANDMAGIC_PLAYERNUM]->ring != NULL)
@@ -473,7 +482,24 @@ void actLeftHandMagic(Entity* my)
 					--cast_animation[HANDMAGIC_PLAYERNUM].mana_left;
 				}
 
-				cast_animation[HANDMAGIC_PLAYERNUM].lefthand_angle += HANDMAGIC_CIRCLE_SPEED;
+				// fskin note: artifact visor improving cast
+				if ((speedcast == true) && abs(stats[HANDMAGIC_PLAYERNUM]->mask->status == WORN))
+				{
+					cast_animation[HANDMAGIC_PLAYERNUM].lefthand_angle += HANDMAGIC_CIRCLE_SPEED * 1.2;
+				}
+				else if ((speedcast == true) && abs(stats[HANDMAGIC_PLAYERNUM]->mask->status == SERVICABLE))
+				{
+					cast_animation[HANDMAGIC_PLAYERNUM].lefthand_angle += HANDMAGIC_CIRCLE_SPEED * 1.6;
+				}
+				else if ((speedcast == true) && abs(stats[HANDMAGIC_PLAYERNUM]->mask->status == EXCELLENT))
+				{
+					cast_animation[HANDMAGIC_PLAYERNUM].lefthand_angle += HANDMAGIC_CIRCLE_SPEED * 2;
+				}
+				else
+				{
+					cast_animation[HANDMAGIC_PLAYERNUM].lefthand_angle += HANDMAGIC_CIRCLE_SPEED;
+				}
+
 				cast_animation[HANDMAGIC_PLAYERNUM].lefthand_movex = cos(cast_animation[HANDMAGIC_PLAYERNUM].lefthand_angle) * HANDMAGIC_CIRCLE_RADIUS;
 				cast_animation[HANDMAGIC_PLAYERNUM].lefthand_movey = sin(cast_animation[HANDMAGIC_PLAYERNUM].lefthand_angle) * HANDMAGIC_CIRCLE_RADIUS;
 				if ( cast_animation[HANDMAGIC_PLAYERNUM].lefthand_angle >= 2 * PI)   //Completed one loop.
