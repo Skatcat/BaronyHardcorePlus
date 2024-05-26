@@ -1147,8 +1147,8 @@ void actTextSource(Entity* my);
 
 //checks if a sprite falls in certain sprite ranges
 
-static const int NUM_ITEM_STRINGS = 333;
-static const int NUM_ITEM_STRINGS_BY_TYPE = 129;
+static const int NUM_ITEM_STRINGS = 336; //fskin note: this garbage needs to be adjusted to add new items n stuff
+static const int NUM_ITEM_STRINGS_BY_TYPE = 132;
 static const int NUM_EDITOR_SPRITES = 180;
 static const int NUM_EDITOR_TILES = 350;
 
@@ -1163,8 +1163,8 @@ int checkSpriteType(Sint32 sprite);
 extern char spriteEditorNameStrings[NUM_EDITOR_SPRITES][64];
 extern char tileEditorNameStrings[NUM_EDITOR_TILES][44];
 extern char monsterEditorNameStrings[NUMMONSTERS][16];
-extern char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][32];
-extern char itemNameStrings[NUM_ITEM_STRINGS][32];
+extern char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][34];
+extern char itemNameStrings[NUM_ITEM_STRINGS][34];
 int canWearEquip(Entity* entity, int category);
 void createMonsterEquipment(Stat* stats, BaronyRNG& rng);
 int countCustomItems(Stat* stats);
