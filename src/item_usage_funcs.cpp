@@ -5260,6 +5260,15 @@ void item_Spellbook(Item*& item, int player)
 			case SPELLBOOK_SELF_POLYMORPH:
 				learned = addSpell(SPELL_SELF_POLYMORPH, player);
 				break;
+			case SPELLBOOK_ANNIHILATEUNDEAD:
+				learned = addSpell(SPELL_ANNIHILATEUNDEAD, player);
+				break;
+			case SPELLBOOK_ANNIHILATEMONSTROSITIES:
+				learned = addSpell(SPELL_ANNIHILATEMONSTROSITIES, player);
+				break;
+			case SPELLBOOK_ANNIHILATEHELLSPAWN:
+				learned = addSpell(SPELL_ANNIHILATEHELLSPAWN, player);
+				break;
 			case SPELLBOOK_9:
 				learned = addSpell(SPELL_CRAB_FORM, player);
 				break;
