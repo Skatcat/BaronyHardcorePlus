@@ -245,31 +245,31 @@ void lichIceDie(Entity* my)
 	my->removeMonsterDeathNodes();
 	playSoundEntity(my, 94, 128);
 	my->removeLightField();
-	// kill all other monsters on the level
-	for ( node = map.creatures->first; my->monsterLichAllyStatus == LICH_ALLY_DEAD && node != NULL; node = nextnode )
-	{
-		nextnode = node->next;
-		Entity* entity = (Entity*)node->element;
-		if ( entity )
-		{
-			if ( entity == my || entity->sprite == 646 )
-			{
-				continue;
-			}
-			if ( entity->behavior == &actMonster )
-			{
-				spawnExplosion(entity->x, entity->y, entity->z);
-				Stat* stats = entity->getStats();
-				if ( stats )
-				{
-					if ( stats->type != HUMAN )
-					{
-						stats->HP = 0;
-					}
-				}
-			}
-		}
-	}
+	// kill all other monsters on the level - fskin note: removed so orpheus/erudyce can be implemented in baphomet fight, functionality will be scripted into the map instead
+	// 	for ( node = map.creatures->first; my->monsterLichAllyStatus == LICH_ALLY_DEAD && node != NULL; node = nextnode )
+	// 	{
+	// 		nextnode = node->next;
+	// 		Entity* entity = (Entity*)node->element;
+	// 		if ( entity )
+	// 		{
+	// 			if ( entity == my || entity->sprite == 646 )
+	// 			{
+	// 				continue;
+	// 			}
+	// 			if ( entity->behavior == &actMonster )
+	// 			{
+	// 				spawnExplosion(entity->x, entity->y, entity->z);
+	// 				Stat* stats = entity->getStats();
+	// 				if ( stats )
+	// 				{
+	// 					if ( stats->type != HUMAN )
+	// 					{
+	// 						stats->HP = 0;
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
 
 	spawnExplosion(my->x, my->y, my->z);
 	list_RemoveNode(my->mynode);
