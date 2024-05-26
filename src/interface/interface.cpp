@@ -9315,6 +9315,9 @@ bool GenericGUIMenu::tinkeringGetItemValue(const Item* item, int* metal, int* ma
 		case SPELLBOOK_SELF_POLYMORPH:
 		case GEM_LUCK:
 		case ENCHANTED_FEATHER:
+		case SPELLBOOK_ANNIHILATEUNDEAD:
+		case SPELLBOOK_ANNIHILATEMONSTROSITIES:
+		case SPELLBOOK_ANNIHILATEHELLSPAWN:
 			*metal = 0;
 			*magic = 8;
 			break;
@@ -9489,6 +9492,7 @@ bool GenericGUIMenu::tinkeringGetItemValue(const Item* item, int* metal, int* ma
 			break;
 
 		case ARTIFACT_BREASTPIECE:
+		case ARTIFACT_SHIELD:
 			*metal = 16;
 			*magic = 16;
 			break;
