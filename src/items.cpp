@@ -2134,6 +2134,7 @@ void useItem(Item* item, const int player, Entity* usedBy, bool unequipForDroppi
 		case STEEL_SHIELD_RESISTANCE:
 		case MIRROR_SHIELD:
 		case CRYSTAL_SHIELD:
+		case ARTIFACT_SHIELD:
 			equipItemResult = equipItem(item, &stats[player]->shield, player, checkInventorySpaceForPaperDoll);
 			break;
 		case CROSSBOW:
@@ -2524,6 +2525,9 @@ void useItem(Item* item, const int player, Entity* usedBy, bool unequipForDroppi
 		case SPELLBOOK_FLUTTER:
 		case SPELLBOOK_DASH:
 		case SPELLBOOK_SELF_POLYMORPH:
+		case SPELLBOOK_ANNIHILATEUNDEAD:
+		case SPELLBOOK_ANNIHILATEMONSTROSITIES:
+		case SPELLBOOK_ANNIHILATEHELLSPAWN:
 			item_Spellbook(item, player);
 			break;
 		case GEM_ROCK:
@@ -2852,6 +2856,9 @@ void useItem(Item* item, const int player, Entity* usedBy, bool unequipForDroppi
 				break;
 			case ARTIFACT_GLOVES:
 				messagePlayer(player, MESSAGE_HINT | MESSAGE_EQUIPMENT, Language::get(2976));
+				break;
+			case ARTIFACT_SHIELD:
+				messagePlayer(player, MESSAGE_HINT | MESSAGE_EQUIPMENT, Language::get(2977));
 				break;
 			case AMULET_LIFESAVING:
 				messagePlayer(player, MESSAGE_HINT | MESSAGE_EQUIPMENT, Language::get(2478));
@@ -3849,7 +3856,7 @@ Sint32 Item::weaponGetAttack(const Stat* const wielder) const
 	}
 	else if ( type == HEAVY_CROSSBOW )
 	{
-		attack += 16;
+		attack += 25; //fskin note: buffed from 16
 	}
 	else if ( type == COMPOUND_BOW )
 	{
@@ -4620,6 +4627,10 @@ Sint32 Item::armorGetAC(const Stat* const wielder) const
 	else if ( type == ARTIFACT_CLOAK )
 	{
 		armor += 0;
+	}
+	else if (type == ARTIFACT_SHIELD)
+	{
+		armor += std::max(4, 3 + (status - 1)); // 2-6
 	}
 	else if ( type == MIRROR_SHIELD )
 	{
@@ -5686,6 +5697,7 @@ bool isItemEquippableInShieldSlot(const Item* const item)
 		case STEEL_SHIELD_RESISTANCE:
 		case MIRROR_SHIELD:
 		case CRYSTAL_SHIELD:
+		case ARTIFACT_SHIELD:
 		case TOOL_TORCH:
 		case TOOL_LANTERN:
 		case TOOL_CRYSTALSHARD:
@@ -5814,7 +5826,7 @@ real_t rangedAttackGetSpeedModifier(const Stat* const myStats)
 		return 1.0;
 	}
 
-	real_t bowModifier = 1.00;
+	real_t bowModifier = 0.0;
 	real_t arrowModifier = 0.0;
 	real_t equipmentModifier = 0.0;
 
