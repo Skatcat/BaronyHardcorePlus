@@ -58,7 +58,7 @@ void initGoatman(Entity* my, Stat* myStats)
 		    }
 			if ( strstr(map.name, "Hell") )
 			{
-				strcpy(myStats->name, "lesser goatman");
+				strcpy(myStats->name, "infernal goatman");
 			}
 			bool minion = false;
 			if ( !myStats->leader_uid )
@@ -71,23 +71,23 @@ void initGoatman(Entity* my, Stat* myStats)
 				minion = true;
 			}
 
-			if ( !strncmp(myStats->name, "lesser goatman", strlen("lesser goatman")) )
+			if ( !strncmp(myStats->name, "infernal goatman", strlen("infernal goatman")) )
 			{
-				myStats->MAXHP = 150;
+				myStats->MAXHP = 750;
 				myStats->HP = myStats->MAXHP;
 				myStats->OLDHP = myStats->HP;
 				myStats->RANDOM_MAXHP = 20;
 				myStats->RANDOM_HP = myStats->RANDOM_MAXHP;
 				//stats->RANDOM_MAXMP = 20;
 				//stats->RANDOM_MP = stats->RANDOM_MAXMP;
-				myStats->STR = 15;
-				myStats->DEX = 5;
-				myStats->CON = 5;
-				myStats->INT = -1;
-				myStats->PER = 0;
+				myStats->STR = 25;
+				myStats->DEX = 9;
+				myStats->CON = 12;
+				myStats->INT = 5;
+				myStats->PER = 5;
 				myStats->RANDOM_PER = 5;
-				myStats->CHR = -1;
-				myStats->LVL = 20;
+				myStats->CHR = 3;
+				myStats->LVL = 28;
 			}
 
 			// apply random stat increases if set in stat_shared.cpp or editor
