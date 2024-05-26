@@ -891,9 +891,14 @@ void initShopkeeper(Entity* my, Stat* myStats)
 									{
 										status = SERVICABLE;
 									}
+									else if (itemInCategory == CROSSBOW)
+									{
+										bless = 5;
+										status = EXCELLENT;
+									} //fskin note: blessed crossbow for the mysterious merchant
 									else if ( itemInCategory == MASK_ARTIFACT_VISOR )
 									{
-										status = EXCELLENT;
+										status = WORN; //fskin note: this item is quite strong now, let's force players to repair it
 									}
 									Item* item = newItem(static_cast<ItemType>(itemInCategory), status, bless, 1, rng.rand(), true, &myStats->inventory);
 									item->x = itemx;
