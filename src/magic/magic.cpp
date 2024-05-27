@@ -1297,9 +1297,11 @@ int getCharmMonsterDifficulty(Entity& my, Stat& myStats)
 	case GOATMAN:
 		difficulty = 2;
 		break;
-	case CRYSTALGOLEM:
 	case VAMPIRE:
 		difficulty = 5;
+		break;
+	case CRYSTALGOLEM: //fskin note: due to crystal golems being bonkers to charm, it's now basically impossible without confusing them first
+		difficulty = 10;
 		break;
 	case COCKATRICE:
 	case SHADOW:
@@ -1318,6 +1320,10 @@ int getCharmMonsterDifficulty(Entity& my, Stat& myStats)
 	if ( myStats.EFFECTS[EFF_CONFUSED] || myStats.EFFECTS[EFF_DRUNK] || my.behavior == &actPlayer )
 	{
 		difficulty -= 1; // players and confused/drunk monsters have lower resistance.
+	}
+	if (myStats.EFFECTS[EFF_CONFUSED] && myStats.type == CRYSTALGOLEM)
+	{
+		difficulty -= 4; // fskin note: crystal golems are easier to charm after confusion, otherwise quite impossible
 	}
 	if ( strcmp(myStats.name, "") && !monsterNameIsGeneric(myStats) )
 	{
@@ -1433,6 +1439,9 @@ void spellEffectCharmMonster(Entity& my, spellElement_t& element, Entity* parent
 			// special cases:
 			if ( (hitstats->type == VAMPIRE && MonsterData_t::nameMatchesSpecialNPCName(*hitstats, "bram kindly"))
 				|| (hitstats->type == COCKATRICE && !strncmp(map.name, "Cockatrice Lair", 15))
+				|| (hitstats->type == CREATURE_IMP && !strncmp(map.name, "The Haunted Castle", 15))
+				|| (hitstats->type == GOATMAN && !strncmp(map.name, "SkyTown", 15))
+				|| (hitstats->type == INCUBUS && !strncmp(map.name, "Ozyx' Domain", 15)) //fskin note: make goatmen and incubi in the new bonus levels not charmable
 				)
 			{
 				chance = 0;
