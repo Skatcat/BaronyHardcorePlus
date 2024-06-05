@@ -1439,9 +1439,13 @@ void spellEffectCharmMonster(Entity& my, spellElement_t& element, Entity* parent
 			// special cases:
 			if ( (hitstats->type == VAMPIRE && MonsterData_t::nameMatchesSpecialNPCName(*hitstats, "bram kindly"))
 				|| (hitstats->type == COCKATRICE && !strncmp(map.name, "Cockatrice Lair", 15))
-				|| (hitstats->type == CREATURE_IMP && !strncmp(map.name, "The Haunted Castle", 15))
-				|| (hitstats->type == GOATMAN && !strncmp(map.name, "SkyTown", 15))
-				|| (hitstats->type == INCUBUS && !strncmp(map.name, "Ozyx' Domain", 15)) //fskin note: make goatmen and incubi in the new bonus levels not charmable
+//				|| (hitstats->type == CREATURE_IMP && !strncmp(map.name, "The Haunted Castle", 15))
+//				|| (hitstats->type == GOATMAN && !strncmp(map.name, "SkyTown", 15))
+//				|| (hitstats->type == INCUBUS && !strncmp(map.name, "Ozyx' Domain", 15)) //fskin note: used to disable charm but I've backpedaled on this for now
+				|| (hitstats->type == GOATMAN && !strncmp(map.name, "Mages Guild", 15))
+				|| (hitstats->type == SKELETON && !strncmp(map.name, "Mages Guild", 15))
+				|| (hitstats->type == SKELETON && !strncmp(map.name, "Hell Boss", 15))
+				|| (hitstats->type == SKELETON && !strncmp(map.name, "Boss", 15))
 				)
 			{
 				chance = 0;
