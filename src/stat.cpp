@@ -1415,7 +1415,7 @@ int Stat::getActiveShieldBonus(bool checkShield) const
 {
 	if ( !checkShield )
 	{
-		return (5 + (getModifiedProficiency(PRO_SHIELD) / 10));
+		return (5 + (getModifiedProficiency(PRO_SHIELD) / 5));
 	}
 
 	if ( shield )
@@ -1424,7 +1424,7 @@ int Stat::getActiveShieldBonus(bool checkShield) const
 		{
 			return 0;
 		}
-		return (5 + (getModifiedProficiency(PRO_SHIELD) / 10));
+		return (5 + (getModifiedProficiency(PRO_SHIELD) / 5)); // fskin note: active shield bonus. used to be nerfed to / 10 but I reverted it for now
 	}
 	else
 	{
