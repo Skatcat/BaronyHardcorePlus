@@ -5437,7 +5437,10 @@ void ingameHud()
 				}
 				input.consumeBinaryToggle("Defend");
 			}
-			input.consumeBinaryToggle("Cast Spell");
+			if (!keystatus[SDLK_LCTRL] && !keystatus[SDLK_RCTRL]) //fskin note: rapid fire magic implementation
+			{
+				input.consumeBinaryToggle("Cast Spell");
+			}
 		}
 		players[player]->magic.resetQuickCastSpell();
 
