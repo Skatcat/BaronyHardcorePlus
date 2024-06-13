@@ -1413,23 +1413,27 @@ void Stat::copyNPCStatsAndInventoryFrom(Stat& src)
 
 int Stat::getActiveShieldBonus(bool checkShield) const
 {
-	if ( !checkShield )
-	{
-		return (5 + (getModifiedProficiency(PRO_SHIELD) / 5));
-	}
+		if (!checkShield)
+		{
+			return (5 + (getModifiedProficiency(PRO_SHIELD) / 5));
+		}
 
-	if ( shield )
-	{
-		if ( itemCategory(shield) == SPELLBOOK || itemTypeIsQuiver(shield->type) )
+		if (shield)
+		{
+			if (itemCategory(shield) == SPELLBOOK || itemTypeIsQuiver(shield->type))
+			{
+				return 0;
+			}
+			else if (getModifiedProficiency(PRO_SHIELD) == 100 && (HP > MAXHP / 3) && (MP > MAXMP / 3))
+			{
+				return (5 + (getModifiedProficiency(PRO_SHIELD) / 5) + (HP / 10) + (MP / 25)); // fskin note: legendary vanguard bonus implementation
+			}
+			return (5 + (getModifiedProficiency(PRO_SHIELD) / 10)); // fskin note: active shield bonus nerf
+		}
+		else
 		{
 			return 0;
 		}
-		return (5 + (getModifiedProficiency(PRO_SHIELD) / 5)); // fskin note: active shield bonus. used to be nerfed to / 10 but I reverted it for now
-	}
-	else
-	{
-		return 0;
-	}
 }
 
 int Stat::getPassiveShieldBonus(bool checkShield) const
