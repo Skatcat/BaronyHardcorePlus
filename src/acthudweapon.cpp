@@ -1228,7 +1228,7 @@ void actHudWeapon(Entity* my)
 									{
 										throwGimpTimer = 40;
 									}
-									else throwGimpTimer = 15; // fskin note: this entire block has our legendary crossbow bonus implementation
+									else throwGimpTimer = 20; // fskin note: this entire block has our legendary crossbow bonus implementation
 
 									HUDWEAPON_CHOP = CROSSBOW_CHOP_RELOAD_START;
 									HUDWEAPON_CROSSBOW_RELOAD_ANIMATION = CROSSBOW_ANIM_SHOOT;
