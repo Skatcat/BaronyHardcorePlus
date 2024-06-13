@@ -167,6 +167,8 @@ struct StatusEffectQueue_t
 	static const int kEffectBountyTarget;
 	static const int kEffectInspiration;
 	static const int kEffectRetaliation;
+	static const int kEffectVanguard; //fskin note: new effect
+	static const int kEffectVanguardCritical; //fskin note: new effect
 	
 	Frame* statusEffectFrame = nullptr;
 	Frame* statusEffectTooltipFrame = nullptr;
