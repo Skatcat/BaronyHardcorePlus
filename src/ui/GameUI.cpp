@@ -6720,6 +6720,8 @@ const int StatusEffectQueue_t::kEffectDrunkGoatman = -22;
 const int StatusEffectQueue_t::kEffectBountyTarget = -23;
 const int StatusEffectQueue_t::kEffectInspiration = -24;
 const int StatusEffectQueue_t::kEffectRetaliation = -25;
+const int StatusEffectQueue_t::kEffectVanguard = -26; //fskin note: new effect
+const int StatusEffectQueue_t::kEffectVanguardCritical = -27; //fskin note: new effect
 const int StatusEffectQueue_t::kSpellEffectOffset = 10000;
 
 Frame* StatusEffectQueue_t::getStatusEffectFrame()
@@ -16772,6 +16774,7 @@ void Player::CharacterSheet_t::updateCharacterSheetTooltip(SheetElements element
 				{
 					snprintf(buf, sizeof(buf), "%s", getHoverTextString("attributes_wgt_base").c_str());
 					int weight = player.movement.getCharacterWeight();
+					int tinkweight = player.movement.getTinkWeight();
 					snprintf(valueBuf, sizeof(valueBuf), getHoverTextString("attributes_wgt_nobonus_format").c_str(), weight);
 				}
 					break;
@@ -31198,10 +31201,10 @@ std::string formatSkillSheetEffects(int playernum, int proficiency, std::string&
 		{
 			val = 25 + (stats[playernum]->type == GOBLIN ? 10 : 0); // degrade > 0 dmg taken
 			val += 2 * (static_cast<int>(stats[playernum]->getModifiedProficiency(proficiency) / 10));
-			if ( skillCapstoneUnlocked(playernum, proficiency) )
-			{
-				val = 0.0;
-			}
+			//if ( skillCapstoneUnlocked(playernum, proficiency) )
+			//{
+			//	val = 0.0;
+			//} fskin note: legendary blocking doesn't remove degrade so it shouldn't say it on the UI
 			if ( val > 0.0001 )
 			{
 				val = 100 / val;
@@ -31216,10 +31219,10 @@ std::string formatSkillSheetEffects(int playernum, int proficiency, std::string&
 				val = 40 + (stats[playernum]->type == GOBLIN ? 10 : 0);
 			}
 			val += 2 * (static_cast<int>(stats[playernum]->getModifiedProficiency(proficiency) / 10));
-			if ( skillCapstoneUnlocked(playernum, proficiency) )
-			{
-				val = 0.0;
-			}
+			//if ( skillCapstoneUnlocked(playernum, proficiency) )
+			//{
+			//	val = 0.0;
+			//}  fskin note: legendary blocking doesn't remove degrade so it shouldn't say it on the UI
 			if ( val > 0.0001 )
 			{
 				val = 100 / val;
