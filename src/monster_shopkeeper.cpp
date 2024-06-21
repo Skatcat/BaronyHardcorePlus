@@ -227,6 +227,78 @@ void initShopkeeper(Entity* my, Stat* myStats)
 				}
 			}
 
+			// fskin note: mercenaries
+			if (currentlevel > 10)
+			for (c = 0; c < 3; ++c)
+			{
+				Entity* entity = summonMonster(HUMAN, my->x, my->y);
+				if (entity)
+				{
+					entity->parent = my->getUID();
+					Stat* followerStats = entity->getStats();
+					if (followerStats)
+					{
+						strcpy(followerStats->name, "mercenary");
+						followerStats->leader_uid = entity->parent;
+						followerStats->appearance = 0;
+						followerStats->sex = MALE;
+						followerStats->LVL = 50;
+						if (currentlevel < 25)
+						{
+							followerStats->HP = 250;
+							followerStats->MAXHP = myStats->HP;
+							followerStats->MP = 50;
+							followerStats->MAXMP = myStats->MP;
+							followerStats->STR = 20;
+							followerStats->DEX = 12;
+							followerStats->CON = 20;
+							followerStats->INT = 50;
+						}
+						else
+						{
+							followerStats->HP = 650;
+							followerStats->MAXHP = myStats->HP;
+							followerStats->MP = 50;
+							followerStats->MAXMP = myStats->MP;
+							followerStats->STR = 65;
+							followerStats->DEX = 12;
+							followerStats->CON = 25;
+							followerStats->INT = 50;
+						}
+						followerStats->PER = 15;
+						followerStats->CHR = 15;
+						if (rng.rand() % 3 == 0)
+						{
+							followerStats->breastplate = newItem(LEATHER_BREASTPIECE, EXCELLENT, 1, 1, 1, true, nullptr);
+							followerStats->gloves = newItem(GAUNTLETS, EXCELLENT, 1, 1, 1, true, nullptr);
+							followerStats->shoes = newItem(LEATHER_BOOTS, EXCELLENT, 1, 1, 1, true, nullptr);
+							followerStats->weapon = newItem(STEEL_SWORD, EXCELLENT, 1, 1, rng.rand(), true, nullptr);
+							followerStats->shield = newItem(STEEL_SHIELD_RESISTANCE, EXCELLENT, 1, 1, 1, true, nullptr);
+							followerStats->helmet = newItem(HAT_WOLF_HOOD, EXCELLENT, 1, 1, rng.rand(), false, nullptr);
+						}
+						else if (rng.rand() % 3 == 1)
+						{
+							followerStats->breastplate = newItem(TUNIC, EXCELLENT, 1, 1, 1, true, nullptr);
+							followerStats->gloves = newItem(GAUNTLETS, EXCELLENT, 1, 1, 1, true, nullptr);
+							followerStats->shoes = newItem(LEATHER_BOOTS, EXCELLENT, 1, 1, 1, true, nullptr);
+							followerStats->cloak = newItem(CLOAK, EXCELLENT, 2, 1, 2, true, nullptr);
+							followerStats->weapon = newItem(CROSSBOW, EXCELLENT, 1, 1, rng.rand(), true, nullptr);
+							followerStats->shield = newItem(QUIVER_PIERCE, EXCELLENT, 1, 1, 1, true, nullptr);
+							followerStats->helmet = newItem(HAT_BYCOCKET, EXCELLENT, 1, 1, rng.rand(), false, nullptr);
+						}
+						else
+						{
+							followerStats->breastplate = newItem(WIZARD_DOUBLET, EXCELLENT, 1, 1, 1, true, nullptr);
+							followerStats->shoes = newItem(LEATHER_BOOTS, EXCELLENT, 1, 1, 1, true, nullptr);
+							followerStats->cloak = newItem(CLOAK_SILVER, EXCELLENT, 2, 1, 2, true, nullptr);
+							followerStats->weapon = newItem(MAGICSTAFF_BLEED, EXCELLENT, 1, 1, rng.rand(), true, nullptr);
+							followerStats->helmet = newItem(HAT_WIZARD, EXCELLENT, 1, 1, rng.rand(), false, nullptr);
+						}
+					}
+					entity->seedEntityRNG(rng.getU32());
+				}
+			}
+
 			// give shopkeeper items
 			if ( myStats->MISC_FLAGS[STAT_FLAG_NPC] == 14 )
 			{
