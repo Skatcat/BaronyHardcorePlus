@@ -1607,7 +1607,7 @@ bool makeFollower(int monsterclicked, bool ringconflict, char namesays[64],
 					{
 						canAlly = true;
 					}
-					if ( stats[monsterclicked]->type == HUMAN )
+					if ( stats[monsterclicked]->type == HUMAN && !MonsterData_t::nameMatchesSpecialNPCName(*myStats, "mercenary")) //fskin note: can't friendship mercenaries ever
 					{
 						canAlly = true;
 					}
