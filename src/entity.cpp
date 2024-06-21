@@ -4754,6 +4754,54 @@ void Entity::handleEffects(Stat* myStats)
 		}
 	}
 
+	// vanguard //fskin note: new shield legendary bonus effect implementation
+
+	bool critrange;
+	critrange = false;
+	bool overrange;
+	overrange = false;
+
+	if (myStats->getModifiedProficiency(PRO_SHIELD) == 100
+		&& myStats->HP > ((myStats->MAXHP) / 3)
+		&& myStats->MP > ((myStats->MAXMP) / 3)
+		&& critrange == false)
+	{
+		myStats->EFFECTS[EFF_VANGUARD] = true;
+		myStats->EFFECTS[EFF_VANGUARD_CRITICAL] = false;
+	} // vanguard full power
+
+	if (myStats->getModifiedProficiency(PRO_SHIELD) < 100
+		|| myStats->HP < ((myStats->MAXHP) / 3)
+		|| myStats->MP < ((myStats->MAXMP) / 3))
+	{
+		myStats->EFFECTS[EFF_VANGUARD] = false;
+		myStats->EFFECTS[EFF_VANGUARD_CRITICAL] = false;
+	} // vanguard broken
+
+	if ((myStats->HP < (myStats->MAXHP) / 2)
+		&& (myStats->HP > (myStats->MAXHP) / 3)
+		||
+		(myStats->MP < (myStats->MAXMP) / 2)
+		&& (myStats->MP > (myStats->MAXMP) / 3))
+	{
+		critrange = true;
+	}
+
+	if ((myStats->HP > (myStats->MAXHP) / 3)
+		&&
+		(myStats->MP > (myStats->MAXMP) / 3))
+	{
+		overrange = true;
+	}
+
+	if (myStats->getModifiedProficiency(PRO_SHIELD) == 100
+		&& critrange == true
+		&& overrange == true)
+	{
+		myStats->EFFECTS[EFF_VANGUARD] = false;
+		myStats->EFFECTS[EFF_VANGUARD_CRITICAL] = true;
+	} // vanguard critical
+
 	// amulet effects
 	if ( myStats->amulet != NULL )
 	{
@@ -21780,6 +21828,7 @@ bool Entity::doSilkenBowOnAttack(Entity* attacker)
 
 		// special cases:
 		if ( (attackerStats->type == VAMPIRE && MonsterData_t::nameMatchesSpecialNPCName(*attackerStats, "bram kindly"))
+			|| (attackerStats->type == HUMAN && MonsterData_t::nameMatchesSpecialNPCName(*attackerStats, "mercenary")) //fskin note: can't charm mercenaries ever
 			|| (attackerStats->type == COCKATRICE && !strncmp(map.name, "Cockatrice Lair", 15))
 			)
 		{
