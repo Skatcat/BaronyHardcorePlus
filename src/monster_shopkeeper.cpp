@@ -228,7 +228,7 @@ void initShopkeeper(Entity* my, Stat* myStats)
 			}
 
 			// fskin note: mercenaries
-			if (currentlevel > 10)
+			if (currentlevel > 10 && currentlevel != 25 && currentlevel != 36 && !secretlevel)
 			for (c = 0; c < 3; ++c)
 			{
 				Entity* entity = summonMonster(HUMAN, my->x, my->y);
@@ -291,8 +291,9 @@ void initShopkeeper(Entity* my, Stat* myStats)
 							followerStats->breastplate = newItem(WIZARD_DOUBLET, EXCELLENT, 1, 1, 1, true, nullptr);
 							followerStats->shoes = newItem(LEATHER_BOOTS, EXCELLENT, 1, 1, 1, true, nullptr);
 							followerStats->cloak = newItem(CLOAK_SILVER, EXCELLENT, 2, 1, 2, true, nullptr);
-							followerStats->weapon = newItem(MAGICSTAFF_BLEED, EXCELLENT, 1, 1, rng.rand(), true, nullptr);
-							followerStats->helmet = newItem(HAT_WIZARD, EXCELLENT, 1, 1, rng.rand(), false, nullptr);
+							followerStats->weapon = newItem(STEEL_HALBERD, EXCELLENT, 1, 1, rng.rand(), true, nullptr);
+							followerStats->helmet = newItem(HAT_STAG_HOOD, EXCELLENT, 1, 1, rng.rand(), false, nullptr);
+							followerStats->helmet = newItem(MASK_BANDIT, EXCELLENT, 1, 1, rng.rand(), false, nullptr);
 						}
 					}
 					entity->seedEntityRNG(rng.getU32());
