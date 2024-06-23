@@ -21828,7 +21828,6 @@ bool Entity::doSilkenBowOnAttack(Entity* attacker)
 
 		// special cases:
 		if ( (attackerStats->type == VAMPIRE && MonsterData_t::nameMatchesSpecialNPCName(*attackerStats, "bram kindly"))
-			|| (attackerStats->type == HUMAN && MonsterData_t::nameMatchesSpecialNPCName(*attackerStats, "mercenary")) //fskin note: can't charm mercenaries ever
 			|| (attackerStats->type == COCKATRICE && !strncmp(map.name, "Cockatrice Lair", 15))
 			)
 		{
