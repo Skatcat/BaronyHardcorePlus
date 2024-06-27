@@ -189,7 +189,10 @@ void castSpellInit(Uint32 caster_uid, spell_t* spell, bool usingSpellbook)
 			messagePlayer(player, MESSAGE_MISC, Language::get(375));
 			if ( players[player]->isLocalPlayer() )
 			{
-				playSound(563, 64);
+				if (!keystatus[SDLK_LCTRL] && !keystatus[SDLK_RCTRL]) //fskin note: make it so rapid magic cast doesn't earrape you when your mana is low
+				{
+					playSound(563, 64);
+				}
 				if ( players[player]->magic.noManaProcessedOnTick == 0 )
 				{
 					players[player]->magic.flashNoMana();
