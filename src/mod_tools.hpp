@@ -1618,51 +1618,125 @@ public:
 		return "default";
 	}
 
+	//void createMonsterFromFile(Entity* entity, Stat* myStats, const std::string& filename, Monster& outMonsterType)
+	//{
+	//	MonsterStatCustomManager::StatEntry* statEntry = monsterStatCustomManager.readFromFile(filename.c_str());
+	//	if ( statEntry )
+	//	{
+	//		statEntry->setStatsAndEquipmentToMonster(myStats);
+	//		outMonsterType = myStats->type;
+	//		while ( statEntry->numFollowers > 0 )
+	//		{
+	//			std::string followerName = statEntry->getFollowerVariant();
+	//			if ( followerName.compare("") && followerName.compare("none") )
+	//			{
+	//				MonsterStatCustomManager::StatEntry* followerEntry = monsterStatCustomManager.readFromFile(followerName.c_str());
+	//				if ( followerEntry )
+	//				{
+	//					Entity* summonedFollower = summonMonster(static_cast<Monster>(followerEntry->type), entity->x, entity->y);
+	//					if ( summonedFollower )
+	//					{
+	//						if ( summonedFollower->getStats() )
+	//						{
+	//							followerEntry->setStatsAndEquipmentToMonster(summonedFollower->getStats());
+	//							summonedFollower->getStats()->leader_uid = entity->getUID();
+	//						}
+	//						summonedFollower->seedEntityRNG(monster_curve_rng.getU32());
+	//					}
+	//					delete followerEntry;
+	//				}
+	//				else
+	//				{
+	//					Entity* summonedFollower = summonMonster(myStats->type, entity->x, entity->y);
+	//					if ( summonedFollower )
+	//					{
+	//						if ( summonedFollower->getStats() )
+	//						{
+	//							summonedFollower->getStats()->leader_uid = entity->getUID();
+	//						}
+	//						summonedFollower->seedEntityRNG(monster_curve_rng.getU32());
+	//					}
+	//				}
+	//			}
+	//			--statEntry->numFollowers;
+	//		}
+	//		delete statEntry;
+	//	}
+	//} //fskin note: removed for WOJ follower desync fix
+
+	struct FollowerGenerateDetails_t
+	{
+		real_t x = 0.0;
+		real_t y = 0.0;
+		int leaderType = NOTHING;
+		Uint32 uid = 0;
+		std::string followerName = "";
+	};
+	std::vector<FollowerGenerateDetails_t> followersToGenerateForLeaders; //fskin note: WOJ follower desync fix
+
 	void createMonsterFromFile(Entity* entity, Stat* myStats, const std::string& filename, Monster& outMonsterType)
 	{
 		MonsterStatCustomManager::StatEntry* statEntry = monsterStatCustomManager.readFromFile(filename.c_str());
-		if ( statEntry )
+		if (statEntry)
 		{
 			statEntry->setStatsAndEquipmentToMonster(myStats);
 			outMonsterType = myStats->type;
-			while ( statEntry->numFollowers > 0 )
+			while (statEntry->numFollowers > 0)
 			{
 				std::string followerName = statEntry->getFollowerVariant();
-				if ( followerName.compare("") && followerName.compare("none") )
+				if (followerName.compare("") && followerName.compare("none"))
 				{
-					MonsterStatCustomManager::StatEntry* followerEntry = monsterStatCustomManager.readFromFile(followerName.c_str());
-					if ( followerEntry )
-					{
-						Entity* summonedFollower = summonMonster(static_cast<Monster>(followerEntry->type), entity->x, entity->y);
-						if ( summonedFollower )
-						{
-							if ( summonedFollower->getStats() )
-							{
-								followerEntry->setStatsAndEquipmentToMonster(summonedFollower->getStats());
-								summonedFollower->getStats()->leader_uid = entity->getUID();
-							}
-							summonedFollower->seedEntityRNG(monster_curve_rng.getU32());
-						}
-						delete followerEntry;
-					}
-					else
-					{
-						Entity* summonedFollower = summonMonster(myStats->type, entity->x, entity->y);
-						if ( summonedFollower )
-						{
-							if ( summonedFollower->getStats() )
-							{
-								summonedFollower->getStats()->leader_uid = entity->getUID();
-							}
-							summonedFollower->seedEntityRNG(monster_curve_rng.getU32());
-						}
-					}
+					followersToGenerateForLeaders.push_back(FollowerGenerateDetails_t());
+					auto& entry = followersToGenerateForLeaders.back();
+					entry.followerName = followerName;
+					entry.x = entity->x;
+					entry.y = entity->y;
+					entry.uid = entity->getUID();
+					entry.leaderType = myStats->type;
 				}
 				--statEntry->numFollowers;
 			}
 			delete statEntry;
 		}
-	}
+	} //fskin note: WOJ follower desync fix
+
+	void generateFollowersForLeaders()
+	{
+		if (multiplayer != CLIENT)
+		{
+			for (auto& entry : followersToGenerateForLeaders)
+			{
+				MonsterStatCustomManager::StatEntry* followerEntry = monsterStatCustomManager.readFromFile(entry.followerName.c_str());
+				if (followerEntry)
+				{
+					Entity* summonedFollower = summonMonsterNoSmoke(static_cast<Monster>(followerEntry->type), entry.x, entry.y);
+					if (summonedFollower)
+					{
+						if (summonedFollower->getStats())
+						{
+							followerEntry->setStatsAndEquipmentToMonster(summonedFollower->getStats());
+							summonedFollower->getStats()->leader_uid = entry.uid;
+						}
+						summonedFollower->seedEntityRNG(monster_curve_rng.getU32());
+					}
+					delete followerEntry;
+				}
+				else
+				{
+					Entity* summonedFollower = summonMonsterNoSmoke(static_cast<Monster>(entry.leaderType), entry.x, entry.y);
+					if (summonedFollower)
+					{
+						if (summonedFollower->getStats())
+						{
+							summonedFollower->getStats()->leader_uid = entry.uid;
+						}
+						summonedFollower->seedEntityRNG(monster_curve_rng.getU32());
+					}
+				}
+			}
+		}
+		followersToGenerateForLeaders.clear();
+	} //fskin note: WOJ follower desync fix
 
 	void writeSampleToDocument()
 	{
