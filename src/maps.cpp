@@ -4103,6 +4103,7 @@ void assignActions(map_t* map)
 	}
 
 	bool customMonsterCurveExists = false;
+	monsterCurveCustomManager.followersToGenerateForLeaders.clear(); //fskin note: WOJ follower desync fix
 	if ( !monsterCurveCustomManager.inUse() )
 	{
 		monsterCurveCustomManager.readFromFile(mapseed);
@@ -7260,6 +7261,10 @@ void assignActions(map_t* map)
 	}
 
     keepInventoryGlobal = svFlags & SV_FLAG_KEEPINVENTORY;
+	if (monsterCurveCustomManager.inUse())
+	{
+		monsterCurveCustomManager.generateFollowersForLeaders();
+	} //fskin note: WOJ follower desync fix
 }
 
 void mapLevel(int player)
