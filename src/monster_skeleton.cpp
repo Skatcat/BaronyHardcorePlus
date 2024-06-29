@@ -1562,7 +1562,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 			case 3:
 				if ( !myStats->weapon )
 				{
-					myStats->weapon = newItem(IRON_SPEAR, EXCELLENT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->weapon = newItem(IRON_SPEAR, EXCELLENT, 8, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1570,7 +1570,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->breastplate )
 				{
-					myStats->breastplate = newItem(IRON_BREASTPIECE, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->breastplate = newItem(IRON_BREASTPIECE, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1578,7 +1578,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->shield )
 				{
-					myStats->shield = newItem(IRON_SHIELD, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->shield = newItem(IRON_SHIELD, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1596,7 +1596,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 			case 4:
 				if ( !myStats->weapon )
 				{
-					myStats->weapon = newItem(STEEL_HALBERD, EXCELLENT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->weapon = newItem(STEEL_HALBERD, EXCELLENT, 15, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1604,7 +1604,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->breastplate )
 				{
-					myStats->breastplate = newItem(IRON_BREASTPIECE, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->breastplate = newItem(IRON_BREASTPIECE, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1612,7 +1612,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->shield )
 				{
-					myStats->shield = newItem(IRON_SHIELD, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->shield = newItem(IRON_SHIELD, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1630,7 +1630,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 			case 5:
 				if ( !myStats->weapon )
 				{
-					myStats->weapon = newItem(STEEL_HALBERD, EXCELLENT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->weapon = newItem(STEEL_HALBERD, EXCELLENT, 30, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1638,7 +1638,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->breastplate )
 				{
-					myStats->breastplate = newItem(STEEL_BREASTPIECE, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->breastplate = newItem(STEEL_BREASTPIECE, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1646,7 +1646,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->shield )
 				{
-					myStats->shield = newItem(STEEL_SHIELD, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->shield = newItem(STEEL_SHIELD, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1664,7 +1664,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 			case 6:
 				if ( !myStats->weapon )
 				{
-					myStats->weapon = newItem(CRYSTAL_SPEAR, EXCELLENT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->weapon = newItem(CRYSTAL_SPEAR, EXCELLENT, 40, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1672,7 +1672,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->breastplate )
 				{
-					myStats->breastplate = newItem(STEEL_BREASTPIECE, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->breastplate = newItem(STEEL_BREASTPIECE, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1680,11 +1680,19 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->shield )
 				{
-					myStats->shield = newItem(STEEL_SHIELD, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->shield = newItem(STEEL_SHIELD, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
 					myStats->shield->type = STEEL_SHIELD;
+				}
+				if (!myStats->amulet)
+				{
+					myStats->amulet = newItem(AMULET_LIFESAVING, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+				}
+				else
+				{
+					myStats->amulet->type = AMULET_LIFESAVING;
 				}
 				if ( !myStats->shoes )
 				{
@@ -1698,7 +1706,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 			case 7:
 				if ( !myStats->weapon )
 				{
-					myStats->weapon = newItem(CRYSTAL_SPEAR, EXCELLENT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->weapon = newItem(CRYSTAL_SPEAR, EXCELLENT, 25, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1706,7 +1714,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->breastplate )
 				{
-					myStats->breastplate = newItem(CRYSTAL_BREASTPIECE, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->breastplate = newItem(CRYSTAL_BREASTPIECE, DECREPIT, 25, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1714,11 +1722,19 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->shield )
 				{
-					myStats->shield = newItem(CRYSTAL_SHIELD, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->shield = newItem(CRYSTAL_SHIELD, DECREPIT, 25, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
 					myStats->shield->type = CRYSTAL_SHIELD;
+				}
+				if (!myStats->amulet)
+				{
+					myStats->amulet = newItem(AMULET_LIFESAVING, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+				}
+				else
+				{
+					myStats->amulet->type = AMULET_LIFESAVING;
 				}
 				if ( !myStats->shoes )
 				{
@@ -1800,7 +1816,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 			case 3:
 				if ( !myStats->weapon )
 				{
-					myStats->weapon = newItem(SHORTBOW, EXCELLENT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->weapon = newItem(SHORTBOW, EXCELLENT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1834,7 +1850,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 			case 4:
 				if ( !myStats->weapon )
 				{
-					myStats->weapon = newItem(SHORTBOW, EXCELLENT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->weapon = newItem(SHORTBOW, EXCELLENT, 10, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1868,7 +1884,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 			case 5:
 				if ( !myStats->weapon )
 				{
-					myStats->weapon = newItem(CROSSBOW, EXCELLENT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->weapon = newItem(CROSSBOW, EXCELLENT, 18, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1910,7 +1926,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 			case 6:
 				if ( !myStats->weapon )
 				{
-					myStats->weapon = newItem(CROSSBOW, EXCELLENT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->weapon = newItem(CROSSBOW, EXCELLENT, 20, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1918,7 +1934,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->helmet )
 				{
-					myStats->helmet = newItem(HAT_HOOD, DECREPIT, 0, 1, 1, false, nullptr);
+					myStats->helmet = newItem(HAT_HOOD, DECREPIT, 15, 1, 1, false, nullptr);
 				}
 				else
 				{
@@ -1934,15 +1950,23 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->gloves )
 				{
-					myStats->gloves = newItem(BRACERS, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->gloves = newItem(BRACERS, DECREPIT, 15, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
 					myStats->gloves->type = BRACERS;
 				}
+				if (!myStats->amulet)
+				{
+					myStats->amulet = newItem(AMULET_LIFESAVING, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+				}
+				else
+				{
+					myStats->amulet->type = AMULET_LIFESAVING;
+				}
 				if ( !myStats->shoes )
 				{
-					myStats->shoes = newItem(STEEL_BOOTS_FEATHER, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->shoes = newItem(STEEL_BOOTS_FEATHER, DECREPIT, 15, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1952,7 +1976,7 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 			case 7:
 				if ( !myStats->weapon )
 				{
-					myStats->weapon = newItem(CROSSBOW, EXCELLENT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->weapon = newItem(CROSSBOW, EXCELLENT, 25, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
@@ -1986,16 +2010,25 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				}
 				if ( !myStats->gloves )
 				{
-					myStats->gloves = newItem(CRYSTAL_GLOVES, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->gloves = newItem(CRYSTAL_GLOVES, DECREPIT, 25, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
 				else
 				{
 					myStats->gloves->type = CRYSTAL_GLOVES;
 				}
+				if (!myStats->amulet)
+				{
+					myStats->amulet = newItem(AMULET_LIFESAVING, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+				}
+				else
+				{
+					myStats->amulet->type = AMULET_LIFESAVING;
+				}
 				if ( !myStats->shoes )
 				{
-					myStats->shoes = newItem(STEEL_BOOTS_FEATHER, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+					myStats->shoes = newItem(STEEL_BOOTS_FEATHER, DECREPIT, 25, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
 				}
+
 				else
 				{
 					myStats->shoes->type = STEEL_BOOTS_FEATHER;
