@@ -9322,21 +9322,20 @@ void Entity::attack(int pose, int charge, Entity* target)
 						}
 						else if ( weaponskill == PRO_MACE && hitstats->HP > 0 )
 						{
-							// paralyze.
-							if ( chance > 0 ) // chance based paralyze
-							{
-								if ( local_rng.rand() % chance == 0 && !hitstats->EFFECTS[EFF_PARALYZED] )
-								{
-									int duration = 75; // 1.5 seconds
+							// paralyze. //fskin note: paralyze inversely scales with enemy CON
+									int duration = 100 - ((hitstats->CON)*3.5); // 1.3 seconds
+									if (duration < 1)
+									{
+										duration = 1;
+									}
 									if ( hitstats->HP > 0 && hit.entity->setEffect(EFF_PARALYZED, true, duration, true) )
 									{
 										paralyzeStatusInflicted = true;
 										playSoundEntity(hit.entity, 172, 64); //TODO: Paralyze spell sound.
 										spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, 170);
 									}
-								}
+								
 								hit.entity->modHP(-capstoneDamage); // do the damage
-							}
 						}
 						else if ( weaponskill == PRO_AXE && hitstats->HP > 0 )
 						{
