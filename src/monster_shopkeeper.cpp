@@ -245,14 +245,16 @@ void initShopkeeper(Entity* my, Stat* myStats)
 						followerStats->LVL = 50;
 						if (currentlevel < 25)
 						{
-							followerStats->HP = 250;
+							followerStats->HP = 175;
 							followerStats->MAXHP = myStats->HP;
 							followerStats->MP = 50;
 							followerStats->MAXMP = myStats->MP;
-							followerStats->STR = 20;
-							followerStats->DEX = 12;
+							followerStats->STR = 50;
+							followerStats->DEX = 20;
 							followerStats->CON = 20;
 							followerStats->INT = 50;
+							followerStats->EFFECTS[EFF_MAGICREFLECT] = true;
+							followerStats->EFFECTS_TIMERS[EFF_MAGICREFLECT] = -1;
 						}
 						else
 						{
@@ -260,10 +262,12 @@ void initShopkeeper(Entity* my, Stat* myStats)
 							followerStats->MAXHP = myStats->HP;
 							followerStats->MP = 50;
 							followerStats->MAXMP = myStats->MP;
-							followerStats->STR = 65;
-							followerStats->DEX = 12;
+							followerStats->STR = 100;
+							followerStats->DEX = 35;
 							followerStats->CON = 25;
 							followerStats->INT = 50;
+							followerStats->EFFECTS[EFF_MAGICREFLECT] = true;
+							followerStats->EFFECTS_TIMERS[EFF_MAGICREFLECT] = -1;
 						}
 						followerStats->PER = 15;
 						followerStats->CHR = 15;
@@ -273,7 +277,7 @@ void initShopkeeper(Entity* my, Stat* myStats)
 							followerStats->gloves = newItem(GAUNTLETS, EXCELLENT, 1, 1, 1, true, nullptr);
 							followerStats->shoes = newItem(LEATHER_BOOTS, EXCELLENT, 1, 1, 1, true, nullptr);
 							followerStats->weapon = newItem(STEEL_SWORD, EXCELLENT, 1, 1, rng.rand(), true, nullptr);
-							followerStats->shield = newItem(STEEL_SHIELD_RESISTANCE, EXCELLENT, 1, 1, 1, true, nullptr);
+							followerStats->shield = newItem(STEEL_SHIELD, EXCELLENT, 1, 1, 1, true, nullptr);
 							followerStats->helmet = newItem(HAT_WOLF_HOOD, EXCELLENT, 1, 1, rng.rand(), false, nullptr);
 						}
 						else if (rng.rand() % 3 == 1)
