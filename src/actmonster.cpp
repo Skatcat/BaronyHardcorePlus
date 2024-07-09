@@ -1627,7 +1627,8 @@ bool makeFollower(int monsterclicked, bool ringconflict, char namesays[64],
 					}
 					else if ( stats[monsterclicked]->type == SUCCUBUS || stats[monsterclicked]->type == INCUBUS )
 					{
-						if ( race == INCUBUS || race == SUCCUBUS )
+						if ( (race == INCUBUS || race == SUCCUBUS)
+							&& !(!strncmp(map.name, "Ozyx' Domain", 4))) //fskin note: unless your leadership is 100 (jank), you can't recruit anyone here
 						{
 							canAlly = true;
 						}
@@ -1647,7 +1648,8 @@ bool makeFollower(int monsterclicked, bool ringconflict, char namesays[64],
 					}
 					else if ( stats[monsterclicked]->type == GOATMAN )
 					{
-						if ( race == GOATMAN )
+						if ( race == GOATMAN
+							&& !(!strncmp(map.name, "SkyTown", 4))) //fskin note: unless your leadership is 100 (jank), you can't recruit anyone here)
 						{
 							canAlly = true;
 						}
