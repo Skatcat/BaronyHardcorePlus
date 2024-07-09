@@ -3095,6 +3095,7 @@ int Player::PlayerMovement_t::getCharacterEquippedWeight()
 int Player::PlayerMovement_t::getCharacterWeight()
 {
 	int weight = 0;
+	int tinkweight = 0;
 	for ( node_t* node = stats[player.playernum]->inventory.first; node != NULL; node = node->next )
 	{
 		Item* item = (Item*)node->element;
@@ -3104,33 +3105,41 @@ int Player::PlayerMovement_t::getCharacterWeight()
 			{
 				weight += item->getWeight();
 			}
-		}
-	}
-	weight += stats[player.playernum]->getGoldWeight();
-	return weight;
-}
-
-int Player::PlayerMovement_t::getTinkWeight() // fskin note: Legendary Tinkering implementation
-{
-	int tinkweight = 0;
-	for (node_t* node = stats[player.playernum]->inventory.first; node != NULL; node = node->next)
-	{
-		Item* item = (Item*)node->element;
-		if (item != NULL)
-		{
-			if (item->type == TOOL_METAL_SCRAP || item->type == TOOL_MAGIC_SCRAP)
+			if (item->type == TOOL_METAL_SCRAP || item->type == TOOL_MAGIC_SCRAP) // fskin note: Legendary Tinkering implementation
 			{
 				tinkweight += item->getWeight();
 			}
 		}
 	}
-	return tinkweight;
+	weight += stats[player.playernum]->getGoldWeight();
+	if (stats[player.playernum]->getModifiedProficiency(PRO_LOCKPICKING) >= SKILL_LEVEL_LEGENDARY)
+	{
+		weight -= tinkweight;
+	}
+	return weight;
 }
+
+//int Player::PlayerMovement_t::getTinkWeight() // fskin note: Legendary Tinkering implementation
+//{
+//	int tinkweight = 0;
+//	for (node_t* node = stats[player.playernum]->inventory.first; node != NULL; node = node->next)
+//	{
+//		Item* item = (Item*)node->element;
+//		if (item != NULL)
+//		{
+//			if (item->type == TOOL_METAL_SCRAP || item->type == TOOL_MAGIC_SCRAP)
+//			{
+//				tinkweight += item->getWeight();
+//			}
+//		}
+//	}
+//	return tinkweight;
+//}
 
 int Player::PlayerMovement_t::getCharacterModifiedWeight(int* customWeight)
 {
 	int weight = getCharacterWeight();
-	int tinkweight = getTinkWeight();
+	//int tinkweight = getTinkWeight();
 	if ( customWeight )
 	{
 		weight = *customWeight;
@@ -3144,10 +3153,10 @@ int Player::PlayerMovement_t::getCharacterModifiedWeight(int* customWeight)
 	{
 		weight = weight * 0.5;
 	}
-	if (stats[player.playernum]->getModifiedProficiency(PRO_LOCKPICKING) >= SKILL_LEVEL_LEGENDARY)
-	{
-		weight = weight - tinkweight;  // fskin note: Legendary Tinkering implementation
-	}
+	//if (stats[player.playernum]->getModifiedProficiency(PRO_LOCKPICKING) >= SKILL_LEVEL_LEGENDARY)
+	//{
+	//	weight = weight - tinkweight;  // fskin note: Legendary Tinkering implementation
+	//}
 	return weight;
 }
 
