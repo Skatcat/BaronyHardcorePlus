@@ -5105,7 +5105,8 @@ void Entity::handleEffects(Stat* myStats)
 
 	// unparalyze certain boss characters
 	if ( myStats->EFFECTS[EFF_PARALYZED] && ((myStats->type >= LICH && myStats->type < KOBOLD)
-		|| myStats->type == COCKATRICE || myStats->type == LICH_FIRE || myStats->type == LICH_ICE) )
+		|| myStats->type == COCKATRICE || myStats->type == LICH_FIRE || myStats->type == LICH_ICE) || !strncmp(myStats->name, "mercenary", strlen("mercenary"))
+		|| !strncmp(myStats->name, "Ozyx", strlen("Ozyx"))) //fskin note: unparalyze mercenaries & Ozyx
 	{
 		myStats->EFFECTS[EFF_PARALYZED] = false;
 		myStats->EFFECTS_TIMERS[EFF_PARALYZED] = 0;
@@ -9320,7 +9321,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 								hit.entity->modHP(-capstoneDamage); // do the damage
 							}
 						}
-						else if ( weaponskill == PRO_MACE && hitstats->HP > 0 )
+						else if ( weaponskill == PRO_MACE && hitstats->HP > 0 && myStats->getModifiedProficiency(PRO_MACE) == 100)
 						{
 							// paralyze. //fskin note: paralyze inversely scales with enemy CON
 									int duration = 100 - ((hitstats->CON)*3.5); // 1.3 seconds
@@ -14266,7 +14267,7 @@ int Entity::getAttackPose() const
 		{
 			if ( myStats->type == INSECTOID && this->monsterSpecialTimer == MONSTER_SPECIAL_COOLDOWN_INSECTOID_ACID )
 			{
-				pose = MONSTER_POSE_MAGIC_WINDUP3;
+				pose = MONSTER_POSE_MAGIC_WINDUP2; //fskin note: shorter windup
 			}
 			else if ( myStats->type == INCUBUS && this->monsterSpecialTimer == MONSTER_SPECIAL_COOLDOWN_INCUBUS_STEAL )
 			{
