@@ -16774,8 +16774,16 @@ void Player::CharacterSheet_t::updateCharacterSheetTooltip(SheetElements element
 				{
 					snprintf(buf, sizeof(buf), "%s", getHoverTextString("attributes_wgt_base").c_str());
 					int weight = player.movement.getCharacterWeight();
-					int tinkweight = player.movement.getTinkWeight();
-					snprintf(valueBuf, sizeof(valueBuf), getHoverTextString("attributes_wgt_nobonus_format").c_str(), weight);
+					//int tinkweight = player.movement.getTinkWeight();
+					//int hudtinkweight = player.movement.getCharacterWeight() - player.movement.getTinkWeight();
+					//if (stats[player.playernum]->getModifiedProficiency(PRO_LOCKPICKING) == SKILL_LEVEL_LEGENDARY)
+					//{
+					//	snprintf(valueBuf, sizeof(valueBuf), getHoverTextString("attributes_wgt_nobonus_format").c_str(), hudtinkweight);
+					//}
+					//else if (stats[player.playernum]->getModifiedProficiency(PRO_LOCKPICKING) != SKILL_LEVEL_LEGENDARY)
+					//{
+						snprintf(valueBuf, sizeof(valueBuf), getHoverTextString("attributes_wgt_nobonus_format").c_str(), weight);
+					//}
 				}
 					break;
 				default:
@@ -19778,18 +19786,9 @@ void Player::CharacterSheet_t::updateAttributes()
 
 	if ( auto field = attributesInnerFrame->findField("weight text stat") )
 	{
-		Sint32 weight = 0;
-		for ( node_t* node = stats[player.playernum]->inventory.first; node != NULL; node = node->next )
-		{
-			Item* item = (Item*)node->element;
-			if ( item )
-			{
-				weight += item->getWeight();
-			}
-		}
-		weight += stats[player.playernum]->getGoldWeight();
+		Sint32 weight = player.movement.getCharacterWeight();;
 		snprintf(buf, sizeof(buf), "%d", weight);
-		if ( strcmp(buf, field->getText()) )
+		if (strcmp(buf, field->getText())) //fskin note: fix by WOJ to remove redundant weight calc
 		{
 			field->setText(buf);
 			charsheetTooltipCache[player.playernum].manualUpdate = true;
