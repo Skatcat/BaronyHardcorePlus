@@ -420,7 +420,7 @@ static char gibtype[NUMMONSTERS] =
 // lower number means less effective, higher number means more effective
 static double damagetables[NUMMONSTERS][7] =
 {
-	{ 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f }, // nothing
+	{ 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f }, // nothing //fskin note: damage tables adjusted
 	{ 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f }, // human
 	{ 1.1, 1.1, 0.9, 0.9, 1.2, 1.f, 1.3 }, // rat
 	{ 0.9, 1.f, 1.1, 1.1, 1.1, 1.f, 0.8 }, // goblin
@@ -434,25 +434,25 @@ static double damagetables[NUMMONSTERS][7] =
 	{ 1.1, 1.f, 0.8, 1.f, 1.3, 1.4, 1.f }, // imp
 	{ 1.f, 1.1, 1.f, 1.2, 1.1, 1.f, 1.1 }, // crab
 	{ 0.9, 1.f, 1.f, 0.9, 1.1, 1.3, 1.f }, // gnome
-	{ 0.9, 0.8, 1.f, 0.8, 0.9, 1.3, 0.8 }, // demon
-	{ 1.2, 1.f, 1.f, 0.9, 1.f, 0.6, 1.f }, // succubus
+	{ 0.9, 0.8, 1.f, 0.8, 0.9, 1.3, 1.f }, // demon
+	{ 1.4, 1.f, 1.f, 0.9, 1.f, 0.5, 1.f }, // succubus
 	{ 0.5, 0.5, 1.0, 0.5, 0.5, 1.7, 0.5 }, // mimic
-	{ 1.f, 1.f, 1.f, 1.f, 1.6, 2.8, 1.f }, // lich
+	{ 1.f, 1.f, 1.f, 1.f, 1.6, 2.8, 2.f }, // lich
 	{ 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f }, // minotaur
-	{ 1.2, 1.2, 1.2, 1.2, 1.f, 1.8, 1.2 }, // devil
+	{ 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 2.f }, // devil
 	{ 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5 }, // shopkeeper
-	{ 0.9, 1.4, 1.4, 0.9, 0.7, 0.2, 0.8 }, // kobold
+	{ 0.9, 1.4, 1.4, 0.9, 0.7, 0.2, 1.f }, // kobold
 	{ 1.5, 1.1, 1.4, 0.7, 1.f, 0.2, 1.4 }, // scarab
 	{ 1.f, 1.5, 1.3, 0.8, 0.8, 1.f, 0.6 }, // crystal golem
-	{ 1.2, 1.f, 1.f, 0.7, 1.3, 0.5, 1.f }, // incubus
-	{ 0.8, 1.2, 0.8, 1.1, 1.7, 0.5, 1.f }, // vampire
+	{ 1.2, 1.f, 1.f, 0.7, 1.5, 0.6, 1.f }, // incubus
+	{ 1.1, 1.3, 1.1, 1.2, 0.9, 0.6, 2.f }, // vampire
 	{ 0.5, 0.5, 0.5, 0.5, 1.f, 2.0, 0.5 }, // shadow
-	{ 1.6, 1.1, 1.3, 1.8, 0.6, 1.f, 0.8 }, // cockatrice
+	{ 1.6, 1.1, 1.3, 1.8, 0.6, 1.f, 1.f }, // cockatrice
 	{ 1.f, 0.7, 1.3, 1.3, 1.3, 1.f, 0.8 }, // insectoid
-	{ 0.9, 1.f, 1.1, 1.1, 1.3, 1.7, 1.f }, // goatman
+	{ 0.7, 1.f, 1.1, 1.1, 1.3, 1.7, 1.f }, // goatman
 	{ 1.f, 1.4, 1.3, 1.f, 0.8, 1.2, 0.8 }, // automaton
-	{ 1.5, 1.5, 1.5, 1.5, 2.2, 0.9, 1.2 }, // lich ice
-	{ 1.8, 1.8, 1.8, 1.8, 1.f, 2.8, 1.4 }, // lich fire
+	{ 1.5, 1.5, 1.5, 1.5, 2.2, 0.9, 2.5 }, // lich ice
+	{ 1.8, 1.8, 1.8, 1.8, 1.f, 2.8, 2.2 }, // lich fire
 	{ 1.f, 1.f, 1.f, 1.f, 0.5, 0.5, 1.f }, // sentrybot
 	{ 1.f, 1.f, 1.f, 1.f, 0.5, 0.5, 1.f }, // sentrybot
 	{ 1.f, 1.f, 1.f, 1.f, 0.5, 0.5, 1.f }, // gyrobot
@@ -891,7 +891,7 @@ static const int MONSTER_SPECIAL_COOLDOWN_SHADOW_PASIVE_TELEPORT = 250;
 static const int MONSTER_SPECIAL_COOLDOWN_SHADOW_SPELLCAST = 250;
 static const int MONSTER_SPECIAL_COOLDOWN_SHADOW_TELEPORT = 300;
 static const int MONSTER_SPECIAL_COOLDOWN_INSECTOID_THROW = 250;
-static const int MONSTER_SPECIAL_COOLDOWN_INSECTOID_ACID = 500;
+static const int MONSTER_SPECIAL_COOLDOWN_INSECTOID_ACID = 100; //fskin note: cooldown reduced
 static const int MONSTER_SPECIAL_COOLDOWN_SPIDER_CAST = 500;
 static const int MONSTER_SPECIAL_COOLDOWN_INCUBUS_CONFUSION = 500;
 static const int MONSTER_SPECIAL_COOLDOWN_INCUBUS_STEAL = 500;
