@@ -813,7 +813,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 						reflection = 0;
 					}
 
-					if (reflection == 3 && hitstats->shield && hitstats->shield->type == (MIRROR_SHIELD || ARTIFACT_SHIELD) && hitstats->defending)
+					if (reflection == 3 && hitstats->shield && (hitstats->shield->type == MIRROR_SHIELD || hitstats->shield->type == ARTIFACT_SHIELD) && hitstats->defending) //fskin note: artifact shield added
 					{
 						if (my->actmagicIsVertical == MAGIC_ISVERTICAL_Z)
 						{
@@ -991,10 +991,13 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 						if (hit.entity->behavior == &actPlayer)
 						{
 					 		hitstats = hit.entity->getStats();
-					 		if (reflection == 3 && hitstats->shield->type == ARTIFACT_SHIELD && hitstats->defending)
-					 		{
-					 			hit.entity->drainMP(10, false);
-					 		}
+							if (reflection == 3 && hitstats->shield)
+							{
+								if (hitstats->shield->type == ARTIFACT_SHIELD && hitstats->defending)
+								{
+									hit.entity->drainMP(10, false);
+								}
+							}
 						}
 					}
 
@@ -1176,7 +1179,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 				if ( hit.entity )
 				{
 					// alert the hit entity if it was a monster
-					if ( hit.entity->behavior == &actMonster && parent != nullptr && parent->behavior != &actDeathGhost )
+					if ( hit.entity->behavior == &actMonster && parent != nullptr && parent->behavior != &actDeathGhost && currentlevel != 42 && currentlevel != 43) //fskin note: hack to make monsters not beef on the arena level
 					{
 						if ( parent->behavior == &actMagicTrap || parent->behavior == &actMagicTrapCeiling )
 						{
@@ -1378,6 +1381,12 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 					}
 				}
 
+				int INTdmgmult = 0; //fskin note: monster INT now affects their spell damage
+				if (parent && parent->behavior == &actMonster)
+				{
+					INTdmgmult = (parent->getStats()->INT)/2;
+				}
+
 				if (!strcmp(element->element_internal_name, spellElement_force.element_internal_name))
 				{
 					if (hit.entity)
@@ -1397,15 +1406,27 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 							Entity* parent = uidToEntity(my->parent);
 							playSoundEntity(hit.entity, 28, 128);
 							int damage = element->damage;
-							damage += (spellbookDamageBonus * damage);
+							damage += (spellbookDamageBonus * damage) + INTdmgmult;
 							//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
 							damage *= damageMultiplier;
 							damage /= (1 + (int)resistance);
 							hit.entity->modHP(-damage);
-							for (i = 0; i < damage; i += 2)   //Spawn a gib for every two points of damage.
+
+							if (damage < 50)
 							{
-								Entity* gib = spawnGib(hit.entity);
-								serverSpawnGibForClient(gib);
+								for (i = 0; i < damage; i += 2)   //Spawn a gib for every two points of damage.
+								{
+									Entity* gib = spawnGib(hit.entity);
+									serverSpawnGibForClient(gib);
+								}
+							}
+							else //fskin note: cap gib spawns at 50 dmg
+							{
+								for (i = 0; i < 50; i += 2) 
+								{
+									Entity* gib = spawnGib(hit.entity);
+									serverSpawnGibForClient(gib);
+								}
 							}
 
 							if (parent)
@@ -1560,7 +1581,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 							Entity* parent = uidToEntity(my->parent);
 							playSoundEntity(hit.entity, 28, 128);
 							int damage = element->damage;
-							damage += (spellbookDamageBonus * damage);
+							damage += (spellbookDamageBonus * damage) + INTdmgmult;
 							//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
 							if ( my->actmagicIsOrbiting == 2 )
 							{
@@ -2185,7 +2206,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 							}
 
 							int damage = element->damage;
-							damage += (spellbookDamageBonus * damage);
+							damage += (spellbookDamageBonus * damage) + INTdmgmult;
 							//messagePlayer(0, "damage: %d", damage);
 							if ( my->actmagicIsOrbiting == 2 )
 							{
@@ -2444,7 +2465,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 							playSoundEntity(my, 173, 64);
 							playSoundEntity(hit.entity, 28, 128);
 							int damage = element->damage;
-							damage += (spellbookDamageBonus * damage);
+							damage += (spellbookDamageBonus * damage) + INTdmgmult;
 							if ( my->actmagicIsOrbiting == 2 )
 							{
 								if ( parent && my->actmagicOrbitCastFromSpell == 0 )
@@ -3310,7 +3331,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 							playSoundEntity(my, 173, 64);
 							playSoundEntity(hit.entity, 28, 128);
 							int damage = element->damage;
-							damage += (spellbookDamageBonus * damage);
+							damage += (spellbookDamageBonus * damage) + INTdmgmult; //fskin note: intdmgmult added
 							//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
 							damage *= damageMultiplier;
 							Stat* casterStats = nullptr;
