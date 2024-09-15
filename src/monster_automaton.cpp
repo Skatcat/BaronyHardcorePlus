@@ -75,16 +75,16 @@ void initAutomaton(Entity* my, Stat* myStats)
 				myStats->EXP = 0;
 				myStats->LVL = 16;
 			}
-			else if ( !strncmp(myStats->name, "corrupted automaton", strlen("corrupted automaton")) )
+			else if ( !strncmp(myStats->name, "corrupted automaton", strlen("corrupted automaton")) ) //fskin note: buffed
 			{
 				greaterMonster = true;
-				myStats->HP = 150;
-				myStats->MAXHP = 150;
+				myStats->HP = 350;
+				myStats->MAXHP = 350;
 				myStats->RANDOM_MAXHP = 0;
 				myStats->RANDOM_HP = 0;
 				myStats->OLDHP = myStats->HP;
-				myStats->STR = 35;
-				myStats->DEX = 13;
+				myStats->STR = 75;
+				myStats->DEX = 20;
 				myStats->CON = 8;
 				myStats->INT = 10;
 				myStats->PER = 25;
