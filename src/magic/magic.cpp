@@ -169,6 +169,18 @@ bool spellEffectDominate(Entity& my, spellElement_t& element, Entity& caster, En
 		return false;
 	}
 
+	if ((hitstats->type == COCKATRICE //fskin note: golems and cockatrices can't be dominated past 30
+		|| hitstats->type == CRYSTALGOLEM) && currentlevel > 30
+		)
+	{
+		Uint32 color = makeColorRGB(255, 0, 0);
+		if (parent)
+		{
+			messagePlayerColor(parent->skill[2], MESSAGE_COMBAT, color, Language::get(2448));
+		}
+		return false;
+	}
+
 	playSoundEntity(hit.entity, 174, 64); //TODO: Dominate spell sound effect.
 
 	//Make the monster a follower.
@@ -177,6 +189,7 @@ bool spellEffectDominate(Entity& my, spellElement_t& element, Entity& caster, En
 	if ( parent && dominated )
 	{
 		Uint32 color = makeColorRGB(0, 255, 0);
+
 		if ( parent->behavior == &actPlayer )
 		{
 			messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(2428), Language::get(2427), MSG_COMBAT);
