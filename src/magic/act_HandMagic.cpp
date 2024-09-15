@@ -482,7 +482,7 @@ void actLeftHandMagic(Entity* my)
 					--cast_animation[HANDMAGIC_PLAYERNUM].mana_left;
 				}
 
-				// fskin note: artifact visor improving cast
+				 //fskin note: artifact visor improving cast
 				if ((speedcast == true) && abs(stats[HANDMAGIC_PLAYERNUM]->mask->status == WORN))
 				{
 					cast_animation[HANDMAGIC_PLAYERNUM].lefthand_angle += HANDMAGIC_CIRCLE_SPEED * 1.2;
