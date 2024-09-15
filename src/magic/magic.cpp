@@ -1,8 +1,8 @@
 /*-------------------------------------------------------------------------------
 
 	BARONY
-	File: magic.cpp
-	Desc: contains magic definitions
+	File: spell.cpp
+	Desc: contains spell definitions
 
 	Copyright 2013-2016 (c) Turning Wheel LLC, all rights reserved.
 	See LICENSE for details.
@@ -12,2878 +12,1398 @@
 #include "../main.hpp"
 #include "../game.hpp"
 #include "../stat.hpp"
-#include "../entity.hpp"
-#include "../interface/interface.hpp"
-#include "../engine/audio/sound.hpp"
-#include "../items.hpp"
-#include "../net.hpp"
-#include "../player.hpp"
 #include "magic.hpp"
-#include "../collision.hpp"
-#include "../classdescriptions.hpp"
-#include "../scores.hpp"
-#include "../prng.hpp"
-#include "../mod_tools.hpp"
 
-void freeSpells()
+std::vector<spell_t*> allGameSpells;
+
+void setupSpells()   ///TODO: Verify this function.
 {
-	list_FreeAll(&spell_forcebolt.elements);
-	list_FreeAll(&spell_magicmissile.elements);
-	list_FreeAll(&spell_cold.elements);
-	list_FreeAll(&spell_fireball.elements);
-	list_FreeAll(&spell_lightning.elements);
-	list_FreeAll(&spell_removecurse.elements);
-	list_FreeAll(&spell_light.elements);
-	list_FreeAll(&spell_identify.elements);
-	list_FreeAll(&spell_magicmapping.elements);
-	list_FreeAll(&spell_sleep.elements);
-	list_FreeAll(&spell_confuse.elements);
-	list_FreeAll(&spell_slow.elements);
-	list_FreeAll(&spell_opening.elements);
-	list_FreeAll(&spell_locking.elements);
-	list_FreeAll(&spell_levitation.elements);
-	list_FreeAll(&spell_invisibility.elements);
-	list_FreeAll(&spell_teleportation.elements);
-	list_FreeAll(&spell_healing.elements);
-	list_FreeAll(&spell_extrahealing.elements);
-	list_FreeAll(&spell_cureailment.elements);
-	list_FreeAll(&spell_dig.elements);
-	list_FreeAll(&spell_summon.elements);
-	list_FreeAll(&spell_stoneblood.elements);
-	list_FreeAll(&spell_bleed.elements);
-	list_FreeAll(&spell_dominate.elements);
-	list_FreeAll(&spell_reflectMagic.elements);
-	list_FreeAll(&spell_acidSpray.elements);
-	list_FreeAll(&spell_stealWeapon.elements);
-	list_FreeAll(&spell_drainSoul.elements);
-	list_FreeAll(&spell_vampiricAura.elements);
-	list_FreeAll(&spell_charmMonster.elements);
-	list_FreeAll(&spell_revertForm.elements);
-	list_FreeAll(&spell_ratForm.elements);
-	list_FreeAll(&spell_spiderForm.elements);
-	list_FreeAll(&spell_trollForm.elements);
-	list_FreeAll(&spell_impForm.elements);
-	list_FreeAll(&spell_sprayWeb.elements);
-	list_FreeAll(&spell_poison.elements);
-	list_FreeAll(&spell_speed.elements);
-	list_FreeAll(&spell_fear.elements);
-	list_FreeAll(&spell_strike.elements);
-	list_FreeAll(&spell_detectFood.elements);
-	list_FreeAll(&spell_weakness.elements);
-	list_FreeAll(&spell_amplifyMagic.elements);
-	list_FreeAll(&spell_shadowTag.elements);
-	list_FreeAll(&spell_telePull.elements);
-	list_FreeAll(&spell_demonIllusion.elements);
-	list_FreeAll(&spell_trollsBlood.elements);
-	list_FreeAll(&spell_salvageItem.elements);
-	list_FreeAll(&spell_flutter.elements);
-	list_FreeAll(&spell_dash.elements);
-	list_FreeAll(&spell_polymorph.elements);
-	list_FreeAll(&spell_ghost_bolt.elements);
-}
-
-void spell_magicMap(int player)
-{
-	if (players[player] == nullptr || players[player]->entity == nullptr)
-	{
-		return;
-	}
-
-	if ( multiplayer == SERVER && player > 0 && !players[player]->isLocalPlayer() )
-	{
-		//Tell the client to map the magic.
-		strcpy((char*)net_packet->data, "MMAP");
-		net_packet->address.host = net_clients[player - 1].host;
-		net_packet->address.port = net_clients[player - 1].port;
-		net_packet->len = 4;
-		sendPacketSafe(net_sock, -1, net_packet, player - 1);
-		return;
-	}
-
-	messagePlayer(player, MESSAGE_HINT, Language::get(412));
-	mapLevel(player);
-}
-
-void spell_detectFoodEffectOnMap(int player)
-{
-	if ( players[player] == nullptr || players[player]->entity == nullptr )
-	{
-		return;
-	}
-
-	if ( multiplayer == SERVER && player > 0 && !players[player]->isLocalPlayer() )
-	{
-		//Tell the client to map the food.
-		strcpy((char*)net_packet->data, "MFOD");
-		net_packet->address.host = net_clients[player - 1].host;
-		net_packet->address.port = net_clients[player - 1].port;
-		net_packet->len = 4;
-		sendPacketSafe(net_sock, -1, net_packet, player - 1);
-		return;
-	}
-
-	mapFoodOnLevel(player);
-}
-
-void spell_summonFamiliar(int player)
-{
-    // deprecated
-}
-
-bool spellEffectDominate(Entity& my, spellElement_t& element, Entity& caster, Entity* parent)
-{
-	if ( !hit.entity )
-	{
-		return false;
-	}
-
-	if ( hit.entity->behavior != &actMonster || hit.entity->isInertMimic() )
-	{
-		return false;
-	}
-
-	Stat* hitstats = hit.entity->getStats();
-	if ( !hitstats )
-	{
-		return false;
-	}
-
-	//Abort if invalid creature (boss, shopkeep, etc).
-	if ( hitstats->type ==  MINOTAUR 
-		|| hitstats->type == LICH 
-		|| hitstats->type == DEVIL 
-		|| hitstats->type == SHOPKEEPER 
-		|| hitstats->type == LICH_ICE 
-		|| hitstats->type == LICH_FIRE 
-		|| hitstats->type == SHADOW
-		|| hitstats->type == MIMIC
-		|| (hitstats->type == VAMPIRE && MonsterData_t::nameMatchesSpecialNPCName(*hitstats, "bram kindly"))
-		|| (hitstats->type == COCKATRICE && !strncmp(map.name, "Cockatrice Lair", 15))
-		)
-	{
-		Uint32 color = makeColorRGB(255, 0, 0);
-		if ( parent )
-		{
-			messagePlayerColor(parent->skill[2], MESSAGE_COMBAT, color, Language::get(2429));
-		}
-		return false;
-	}
-
-	if ((hitstats->type == COCKATRICE //fskin note: golems and cockatrices can't be dominated past 30
-		|| hitstats->type == CRYSTALGOLEM) && currentlevel > 30
-		)
-	{
-		Uint32 color = makeColorRGB(255, 0, 0);
-		if (parent)
-		{
-			messagePlayerColor(parent->skill[2], MESSAGE_COMBAT, color, Language::get(2448));
-		}
-		return false;
-	}
-
-	playSoundEntity(hit.entity, 174, 64); //TODO: Dominate spell sound effect.
-
-	//Make the monster a follower.
-	bool dominated = forceFollower(caster, *hit.entity);
-
-	if ( parent && dominated )
-	{
-		Uint32 color = makeColorRGB(0, 255, 0);
-
-		if ( parent->behavior == &actPlayer )
-		{
-			messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(2428), Language::get(2427), MSG_COMBAT);
-		}
-
-		hit.entity->monsterAllyIndex = parent->skill[2];
-		hit.entity->setEffect(EFF_CONFUSED, false, 0, false);
-		if ( multiplayer == SERVER )
-		{
-			serverUpdateEntitySkill(hit.entity, 42); // update monsterAllyIndex for clients.
-		}
-		// change the color of the hit entity.
-
-		hit.entity->flags[USERFLAG2] = true;
-		serverUpdateEntityFlag(hit.entity, USERFLAG2);
-		if ( monsterChangesColorWhenAlly(hitstats) )
-		{
-			int bodypart = 0;
-			for ( node_t* node = (hit.entity)->children.first; node != nullptr; node = node->next )
-			{
-				if ( bodypart >= LIMB_HUMANOID_TORSO )
-				{
-					Entity* tmp = (Entity*)node->element;
-					if ( tmp )
-					{
-						tmp->flags[USERFLAG2] = true;
-						//serverUpdateEntityFlag(tmp, USERFLAG2);
-					}
-				}
-				++bodypart;
-			}
-		}
-
-		caster.drainMP(hitstats->HP); //Drain additional MP equal to health of monster.
-		Stat* casterStats = caster.getStats();
-		if ( casterStats && casterStats->HP <= 0 )
-		{
-			// uh oh..
-			if ( casterStats->amulet && casterStats->amulet->type == AMULET_LIFESAVING && casterStats->amulet->beatitude >= 0 )
-			{
-				// we're good!
-				steamAchievementEntity(&caster, "BARONY_ACH_LIFE_FOR_A_LIFE");
-			}
-		}
-	}
-
-	spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my.sprite);
-	return true;
-}
-
-void spellEffectAcid(Entity& my, spellElement_t& element, Entity* parent, int resistance)
-{
-	playSoundEntity(&my, 173, 128);
-		
-	if ( hit.entity )
-	{
-		int damage = element.damage;
-		damage += damage * ((my.actmagicSpellbookBonus / 100.f) + getBonusFromCasterOfSpellElement(parent, nullptr, &element, SPELL_ACID_SPRAY));
-		//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
-
-		if ( (hit.entity->behavior == &actMonster && !hit.entity->isInertMimic()) || hit.entity->behavior == &actPlayer )
-		{
-			Entity* parent = uidToEntity(my.parent);
-			if ( !(svFlags & SV_FLAG_FRIENDLYFIRE) )
-			{
-				// test for friendly fire
-				if ( parent && parent->checkFriend(hit.entity) )
-				{
-					return;
-				}
-			}
-			//playSoundEntity(&my, 173, 64);
-			//playSoundEntity(hit.entity, 28, 64);
-
-			Stat* hitstats = hit.entity->getStats();
-			if ( !hitstats )
-			{
-				return;
-			}
-			bool hasamulet = false;
-			bool hasgoggles = false;
-			if ( (hitstats->amulet && hitstats->amulet->type == AMULET_POISONRESISTANCE) || hitstats->type == INSECTOID )
-			{
-				resistance += 2;
-				hasamulet = true;
-			}
-			if ( hitstats->mask && hitstats->mask->type == MASK_HAZARD_GOGGLES )
-			{
-				if ( !(hit.entity->behavior == &actPlayer && hit.entity->effectShapeshift != NOTHING) )
-				{
-					hasgoggles = true;
-					resistance += 2;
-				}
-			}
-
-			DamageGib dmgGib = DMG_DEFAULT;
-			real_t damageMultiplier = Entity::getDamageTableMultiplier(hit.entity, *hitstats, DAMAGE_TABLE_MAGIC);
-			if ( damageMultiplier <= 0.75 )
-			{
-				dmgGib = DMG_WEAKEST;
-			}
-			else if ( damageMultiplier <= 0.85 )
-			{
-				dmgGib = DMG_WEAKER;
-			}
-			else if ( damageMultiplier >= 1.25 )
-			{
-				dmgGib = resistance == 0 ? DMG_STRONGEST : DMG_WEAKER;
-			}
-			else if ( damageMultiplier >= 1.15 )
-			{
-				dmgGib = resistance == 0 ? DMG_STRONGER : DMG_WEAKER;
-			}
-			else if ( resistance > 0 )
-			{
-				dmgGib = DMG_WEAKEST;
-			}
-
-			int oldHP = hitstats->HP;
-			damage /= (1 + (int)resistance);
-			damage *= damageMultiplier;
-			if ( !hasgoggles )
-			{
-				hit.entity->modHP(-damage);
-			}
-
-			// write the obituary
-			if ( parent )
-			{
-				parent->killedByMonsterObituary(hit.entity);
-			}
-
-			int previousDuration = hitstats->EFFECTS_TIMERS[EFF_POISONED];
-			int duration = 6 * TICKS_PER_SECOND;
-			duration /= (1 + (int)resistance);
-			bool recentlyHitBySameSpell = false;
-			if ( !hasamulet && !hasgoggles )
-			{
-				hitstats->EFFECTS[EFF_POISONED] = true;
-				hitstats->EFFECTS_TIMERS[EFF_POISONED] = duration; // 6 seconds.
-				if ( abs(duration - previousDuration) > 10 ) // message if not recently acidified
-				{
-					recentlyHitBySameSpell = false;
-				}
-				else
-				{
-					recentlyHitBySameSpell = true;
-				}
-				hitstats->poisonKiller = my.parent;
-			}
-			
-			if ( !recentlyHitBySameSpell && !hasgoggles )
-			{
-				playSoundEntity(hit.entity, 249, 64);
-			}
-			/*hitstats->EFFECTS[EFF_SLOW] = true;
-			hitstats->EFFECTS_TIMERS[EFF_SLOW] = (element->duration * (((element->mana) / static_cast<double>(element->base_mana)) * element->overload_multiplier));
-			hitstats->EFFECTS_TIMERS[EFF_SLOW] /= (1 + (int)resistance);*/
-			if ( hit.entity->behavior == &actPlayer )
-			{
-				serverUpdateEffects(hit.entity->skill[2]);
-			}
-			// hit messages
-			if ( parent )
-			{
-				Uint32 color = makeColorRGB(0, 255, 0);
-				if ( parent->behavior == &actPlayer )
-				{
-					if ( !recentlyHitBySameSpell )
-					{
-						messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(2431), Language::get(2430), MSG_COMBAT);
-					}
-				}
-			}
-
-			// update enemy bar for attacker
-			if ( !strcmp(hitstats->name, "") )
-			{
-				updateEnemyBar(parent, hit.entity, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP,
-					false, dmgGib);
-			}
-			else
-			{
-				updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP,
-					false, dmgGib);
-			}
-
-			if ( oldHP > 0 && hitstats->HP <= 0 && parent )
-			{
-				parent->awardXP(hit.entity, true, true);
-				spawnBloodVialOnMonsterDeath(hit.entity, hitstats, parent);
-			}
-
-			Uint32 color = makeColorRGB(255, 0, 0);
-
-			int player = -1;
-			if ( hit.entity->behavior == &actPlayer )
-			{
-				player = hit.entity->skill[2];
-			}
-			if ( player >= 0 )
-			{
-				if ( !recentlyHitBySameSpell )
-				{
-					messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(2432));
-					if ( hasgoggles )
-					{
-						messagePlayerColor(player, MESSAGE_COMBAT, makeColorRGB(0, 255, 0), Language::get(6088));
-					}
-				}
-			}
-
-			if ( hitstats->HP > 0 && !hasgoggles )
-			{
-				// damage armor
-				Item* armor = nullptr;
-				int armornum = -1;
-				if ( hitstats->defending && (local_rng.rand() % (8 + resistance) == 0) ) // 1 in 8 to corrode shield
-				{
-					armornum = hitstats->pickRandomEquippedItem(&armor, true, false, true, true);
-				}
-				else if ( !hitstats->defending && (local_rng.rand() % (4 + resistance) == 0) ) // 1 in 4 to corrode armor
-				{
-					armornum = hitstats->pickRandomEquippedItem(&armor, true, false, false, false);
-				}
-				//messagePlayer(0, "armornum: %d", armornum);
-				if ( armornum != -1 && armor != nullptr )
-				{
-					hit.entity->degradeArmor(*hitstats, *armor, armornum);
-					//messagePlayerColor(player, color, "Armor piece: %s", armor->getName());
-				}
-			}
-		}
-		else if ( hit.entity->behavior == &actDoor )
-		{
-			hit.entity->doorHandleDamageMagic(damage, my, parent);
-		}
-		else if ( hit.entity->isDamageableCollider() && hit.entity->isColliderDamageableByMagic() )
-		{
-			hit.entity->colliderHandleDamageMagic(damage, my, parent);
-		}
-		spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my.sprite);
-	}
-	else
-	{
-		spawnMagicEffectParticles(my.x, my.y, my.z, my.sprite);
-	}
-}
-
-void spellEffectPoison(Entity& my, spellElement_t& element, Entity* parent, int resistance)
-{
-	playSoundEntity(&my, 173, 128);
-	if ( hit.entity )
-	{
-		int damage = element.damage;
-		damage += damage * ((my.actmagicSpellbookBonus / 100.f) + getBonusFromCasterOfSpellElement(parent, nullptr, &element, SPELL_POISON));
-		//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
-
-		if ( (hit.entity->behavior == &actMonster && !hit.entity->isInertMimic()) || hit.entity->behavior == &actPlayer )
-		{
-			Entity* parent = uidToEntity(my.parent);
-			if ( !(svFlags & SV_FLAG_FRIENDLYFIRE) )
-			{
-				// test for friendly fire
-				if ( parent && parent->checkFriend(hit.entity) )
-				{
-					return;
-				}
-			}
-			playSoundEntity(hit.entity, 249, 64);
-
-			Stat* hitstats = hit.entity->getStats();
-			if ( !hitstats )
-			{
-				return;
-			}
-			bool hasamulet = false;
-			if ( (hitstats->amulet && hitstats->amulet->type == AMULET_POISONRESISTANCE) || hitstats->type == INSECTOID )
-			{
-				resistance += 2;
-				hasamulet = true;
-			}
-
-			DamageGib dmgGib = DMG_DEFAULT;
-			real_t damageMultiplier = Entity::getDamageTableMultiplier(hit.entity, *hitstats, DAMAGE_TABLE_MAGIC);
-			if ( damageMultiplier <= 0.75 )
-			{
-				dmgGib = DMG_WEAKEST;
-			}
-			else if ( damageMultiplier <= 0.85 )
-			{
-				dmgGib = DMG_WEAKER;
-			}
-			else if ( damageMultiplier >= 1.25 )
-			{
-				dmgGib = resistance == 0 ? DMG_STRONGEST : DMG_WEAKER;
-			}
-			else if ( damageMultiplier >= 1.15 )
-			{
-				dmgGib = resistance == 0 ? DMG_STRONGER : DMG_WEAKER;
-			}
-			else if ( resistance > 0 )
-			{
-				dmgGib = DMG_WEAKEST;
-			}
-
-			damage /= (1 + (int)resistance);
-			damage *= damageMultiplier;
-			hit.entity->modHP(-damage);
-
-			// write the obituary
-			if ( parent )
-			{
-				parent->killedByMonsterObituary(hit.entity);
-			}
-
-			if ( !hasamulet )
-			{
-				if ( my.actmagicCastByMagicstaff == 1 )
-				{
-					hit.entity->setEffect(EFF_POISONED, true, 320, true); // 6 seconds.
-				}
-				else
-				{
-					hit.entity->setEffect(EFF_POISONED, true, std::max(200, 350 - hit.entity->getCON() * 5), true); // 4-7 seconds.
-				}
-				hitstats->poisonKiller = my.parent;
-			}
-
-			if ( hit.entity->behavior == &actPlayer )
-			{
-				serverUpdateEffects(hit.entity->skill[2]);
-			}
-			// hit messages
-			if ( parent )
-			{
-				Uint32 color = makeColorRGB(0, 255, 0);
-				if ( parent->behavior == &actPlayer )
-				{
-					messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3427), Language::get(3426), MSG_COMBAT);
-				}
-			}
-
-			// update enemy bar for attacker
-			if ( !strcmp(hitstats->name, "") )
-			{
-				updateEnemyBar(parent, hit.entity, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP,
-					false, dmgGib);
-			}
-			else
-			{
-				updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP,
-					false, dmgGib);
-			}
-
-			if ( hitstats->HP <= 0 && parent )
-			{
-				parent->awardXP(hit.entity, true, true);
-				spawnBloodVialOnMonsterDeath(hit.entity, hitstats, parent);
-			}
-
-			Uint32 color = makeColorRGB(255, 0, 0);
-
-			int player = -1;
-			if ( hit.entity->behavior == &actPlayer )
-			{
-				player = hit.entity->skill[2];
-			}
-			if ( player >= 0 )
-			{
-				messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(3428));
-			}
-		}
-		else if ( hit.entity->behavior == &actDoor )
-		{
-			hit.entity->doorHandleDamageMagic(damage, my, parent);
-		}
-		else if ( hit.entity->isDamageableCollider() && hit.entity->isColliderDamageableByMagic() )
-		{
-			hit.entity->colliderHandleDamageMagic(damage, my, parent);
-		}
-		spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my.sprite);
-	}
-	else
-	{
-		spawnMagicEffectParticles(my.x, my.y, my.z, my.sprite);
-	}
-}
-
-bool spellEffectFear(Entity* my, spellElement_t& element, Entity* forceParent, Entity* target, int resistance)
-{
-	if ( !target )
-	{
-		//spawnMagicEffectParticles(my.x, my.y, my.z, 863);
-		return false;
-	}
-
-	if ( (target->behavior == &actMonster && !target->isInertMimic()) || target->behavior == &actPlayer )
-	{
-		Entity* parent = forceParent;
-		if ( my && !parent )
-		{
-			parent = uidToEntity(my->parent);
-		}
-		if ( !(svFlags & SV_FLAG_FRIENDLYFIRE) )
-		{
-			// test for friendly fire
-			if ( parent && parent->checkFriend(target) )
-			{
-				return false;
-			}
-		}
-
-		Stat* hitstats = target->getStats();
-		if ( !hitstats )
-		{
-			return false;
-		}
-
-		int duration = 400; // 8 seconds
-		duration = std::max(150, duration - TICKS_PER_SECOND * (hitstats->CON / 5)); // 3-8 seconds, depending on CON.
-		duration /= (1 + resistance);
-		if ( target->setEffect(EFF_FEAR, true, duration, true) )
-		{
-			playSoundEntity(target, 168, 128); // Healing.ogg
-			Uint32 color = 0;
-			if ( parent )
-			{
-				// update enemy bar for attacker
-				/*if ( !strcmp(hitstats->name, "") )
-				{
-					updateEnemyBar(parent, target, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP);
-				}
-				else
-				{
-					updateEnemyBar(parent, target, hitstats->name, hitstats->HP, hitstats->MAXHP);
-				}*/
-				target->monsterAcquireAttackTarget(*parent, MONSTER_STATE_PATH);
-				target->monsterFearfulOfUid = parent->getUID();
-
-				if ( parent->behavior == &actPlayer && parent->getStats() && parent->getStats()->type == TROLL )
-				{
-					serverUpdatePlayerGameplayStats(parent->skill[2], STATISTICS_FORUM_TROLL, AchievementObserver::FORUM_TROLL_FEAR);
-				}
-			}
-		}
-		else
-		{
-			// no effect.
-			if ( parent )
-			{
-				Uint32 color = makeColorRGB(255, 0, 0);
-				if ( parent->behavior == &actPlayer )
-				{
-					messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(2905), Language::get(2906), MSG_COMBAT);
-				}
-			}
-			return false;
-		}
-
-		// hit messages
-		if ( parent )
-		{
-			Uint32 color = makeColorRGB(0, 255, 0);
-			if ( parent->behavior == &actPlayer )
-			{
-				messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3434), Language::get(3435), MSG_COMBAT);
-			}
-		}
-
-		Uint32 color = makeColorRGB(255, 0, 0);
-
-		int player = -1;
-		if ( target->behavior == &actPlayer )
-		{
-			player = target->skill[2];
-		}
-		if ( player >= 0 )
-		{
-			messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(3436));
-		}
-	}
-	spawnMagicEffectParticles(target->x, target->y, target->z, 863);
-	return true;
-}
-
-void spellEffectSprayWeb(Entity& my, spellElement_t& element, Entity* parent, int resistance)
-{
-	if ( hit.entity )
-	{
-		if ( (hit.entity->behavior == &actMonster && !hit.entity->isInertMimic()) || hit.entity->behavior == &actPlayer )
-		{
-			Entity* parent = uidToEntity(my.parent);
-			if ( !(svFlags & SV_FLAG_FRIENDLYFIRE) )
-			{
-				// test for friendly fire
-				if ( parent && parent->checkFriend(hit.entity) )
-				{
-					return;
-				}
-			}
-
-			Stat* hitstats = hit.entity->getStats();
-			if ( !hitstats )
-			{
-				return;
-			}		
-
-			bool spawnParticles = true;
-			if ( hitstats->EFFECTS[EFF_WEBBED] )
-			{
-				spawnParticles = false;
-			}
-			int previousDuration = hitstats->EFFECTS_TIMERS[EFF_WEBBED];
-			int duration = 400;
-			duration /= (1 + resistance);
-			if ( hit.entity->setEffect(EFF_WEBBED, true, 400, true) ) // 8 seconds.
-			{
-				if ( abs(duration - previousDuration) > 10 )
-				{
-					playSoundEntity(hit.entity, 396 + local_rng.rand() % 3, 64); // play sound only if not recently webbed. (triple shot makes many noise)
-				}
-				hit.entity->creatureWebbedSlowCount = std::min(3, hit.entity->creatureWebbedSlowCount + 1);
-				if ( hit.entity->behavior == &actPlayer )
-				{
-					serverUpdateEntitySkill(hit.entity, 52); // update player.
-				}
-				if ( spawnParticles )
-				{
-					createParticleAestheticOrbit(hit.entity, 863, 400, PARTICLE_EFFECT_SPELL_WEB_ORBIT);
-					serverSpawnMiscParticles(hit.entity, PARTICLE_EFFECT_SPELL_WEB_ORBIT, 863);
-				}
-			}
-			else
-			{
-				// no effect.
-				if ( parent )
-				{
-					Uint32 color = makeColorRGB(255, 0, 0);
-					if ( parent->behavior == &actPlayer )
-					{
-						messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(2905), Language::get(2906), MSG_COMBAT);
-					}
-				}
-				return;
-			}
-
-			// hit messages
-			if ( parent )
-			{
-				Uint32 color = makeColorRGB(0, 255, 0);
-				if ( parent->behavior == &actPlayer )
-				{
-					if ( abs(duration - previousDuration) > 10 ) // message if not recently webbed
-					{
-						messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3430), Language::get(3429), MSG_COMBAT);
-					}
-				}
-			}
-
-			Uint32 color = makeColorRGB(255, 0, 0);
-
-			int player = -1;
-			if ( hit.entity->behavior == &actPlayer )
-			{
-				player = hit.entity->skill[2];
-			}
-			if ( player >= 0 )
-			{
-				if ( abs(duration - previousDuration) > 10 ) // message if not recently webbed
-				{
-					messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(3431));
-				}
-			}
-		}
-		spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, 863);
-	}
-	else
-	{
-		spawnMagicEffectParticles(my.x, my.y, my.z, 863);
-	}
-}
-
-void spellEffectStealWeapon(Entity& my, spellElement_t& element, Entity* parent, int resistance)
-{
-	if ( hit.entity )
-	{
-		if ( (hit.entity->behavior == &actMonster && !hit.entity->isInertMimic()) || hit.entity->behavior == &actPlayer )
-		{
-			Entity* parent = uidToEntity(my.parent);
-			if ( !(svFlags & SV_FLAG_FRIENDLYFIRE) )
-			{
-				// test for friendly fire
-				if ( parent && parent->checkFriend(hit.entity) )
-				{
-					return;
-				}
-			}
-
-			Stat* hitstats = hit.entity->getStats();
-			if ( !hitstats )
-			{
-				return;
-			}
-
-			if ( hitstats->type == LICH || hitstats->type == LICH_FIRE || hitstats->type == LICH_ICE || hitstats->type == DEVIL )
-			{
-				return;
-			}
-
-			if ( hit.entity->behavior == &actMonster 
-				&& (hit.entity->monsterAllySummonRank != 0 
-					|| (hitstats->type == INCUBUS && !strncmp(hitstats->name, "inner demon", strlen("inner demon"))))
-				)
-			{
-				return;
-			}
-
-			// update enemy bar for attacker
-			/*if ( !strcmp(hitstats->name, "") )
-			{
-				updateEnemyBar(parent, hit.entity, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP);
-			}
-			else
-			{
-				updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP);
-			}*/
-
-			Uint32 color = makeColorRGB(255, 0, 0);
-
-			int player = -1;
-			if ( hit.entity->behavior == &actPlayer )
-			{
-				player = hit.entity->skill[2];
-			}
-
-			if ( hitstats->weapon )
-			{
-				Entity* spellEntity = createParticleSapCenter(parent, hit.entity, SPELL_STEAL_WEAPON, my.sprite, my.sprite);
-				if ( spellEntity )
-				{
-					playSoundEntity(&my, 174, 128); // succeeded spell sound
-					spellEntity->skill[7] = 1; // found weapon
-
-					// store weapon data
-					spellEntity->skill[10] = hitstats->weapon->type;
-					if ( itemCategory(hitstats->weapon) == SPELLBOOK )
-					{
-						spellEntity->skill[11] = DECREPIT;
-					}
-					else
-					{
-						spellEntity->skill[11] = hitstats->weapon->status;
-					}
-					spellEntity->skill[12] = hitstats->weapon->beatitude;
-					spellEntity->skill[13] = hitstats->weapon->count;
-					spellEntity->skill[14] = hitstats->weapon->appearance;
-					spellEntity->skill[15] = hitstats->weapon->identified;
-					spellEntity->itemOriginalOwner = hit.entity->getUID();
-					// hit messages
-					if ( player >= 0 )
-					{
-						color = makeColorRGB(255, 0, 0);
-						messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(2435), hitstats->weapon->getName());
-					}
-
-					if ( parent )
-					{
-						color = makeColorRGB(0, 255, 0);
-						if ( parent->behavior == &actPlayer )
-						{
-							messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(2434), Language::get(2433), MSG_STEAL_WEAPON);
-						}
-					}
-
-					if ( hit.entity->behavior == &actMonster && itemCategory(hitstats->weapon) != SPELLBOOK )
-					{
-						free(hitstats->weapon);
-						hitstats->weapon = nullptr;
-					}
-					else if ( hit.entity->behavior == &actPlayer )
-					{
-						// player.
-						Item* weapon = hitstats->weapon;
-						if ( player > 0 && multiplayer == SERVER && !players[player]->isLocalPlayer() )
-						{
-							strcpy((char*)net_packet->data, "STLA");
-							net_packet->data[4] = 5; // steal weapon index in STLA netcode.
-							SDLNet_Write32(static_cast<Uint32>(weapon->type), &net_packet->data[5]);
-							SDLNet_Write32(static_cast<Uint32>(weapon->status), &net_packet->data[9]);
-							SDLNet_Write32(static_cast<Uint32>(weapon->beatitude), &net_packet->data[13]);
-							SDLNet_Write32(static_cast<Uint32>(weapon->count), &net_packet->data[17]);
-							SDLNet_Write32(static_cast<Uint32>(weapon->appearance), &net_packet->data[21]);
-							net_packet->data[25] = weapon->identified;
-							net_packet->address.host = net_clients[player - 1].host;
-							net_packet->address.port = net_clients[player - 1].port;
-							net_packet->len = 26;
-							sendPacketSafe(net_sock, -1, net_packet, player - 1);
-						}
-
-						Item** slot = itemSlot(hitstats, weapon);
-						if ( slot )
-						{
-							*slot = nullptr;
-						}
-						if ( weapon->node )
-						{
-							list_RemoveNode(weapon->node);
-						}
-						else
-						{
-							free(weapon);
-						}
-					}
-				}
-			}
-			else
-			{
-				playSoundEntity(&my, 163, 128); // failed spell sound
-				// hit messages
-				if ( player >= 0 )
-				{
-					color = makeColorRGB(0, 255, 0);
-					messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(2438));
-				}
-
-				if ( parent )
-				{
-					color = makeColorRGB(255, 255, 255);
-					if ( parent->behavior == &actPlayer )
-					{
-						messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(2437), Language::get(2436), MSG_COMBAT);
-					}
-				}
-			}
-		}
-		spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my.sprite);
-	}
-	else
-	{
-		spawnMagicEffectParticles(my.x, my.y, my.z, my.sprite);
-	}
-	return;
-}
-
-void spellEffectDrainSoul(Entity& my, spellElement_t& element, Entity* parent, int resistance)
-{
-	if ( hit.entity )
-	{
-		if ( (hit.entity->behavior == &actMonster && !hit.entity->isInertMimic()) || hit.entity->behavior == &actPlayer )
-		{
-			Entity* parent = uidToEntity(my.parent);
-			if ( !(svFlags & SV_FLAG_FRIENDLYFIRE) )
-			{
-				// test for friendly fire
-				if ( parent && parent->checkFriend(hit.entity) )
-				{
-					return;
-				}
-			}
-
-			Stat* hitstats = hit.entity->getStats();
-			if ( !hitstats )
-			{
-				return;
-			}
-
-			DamageGib dmgGib = DMG_DEFAULT;
-			real_t damageMultiplier = Entity::getDamageTableMultiplier(hit.entity, *hitstats, DAMAGE_TABLE_MAGIC);
-			if ( damageMultiplier <= 0.75 )
-			{
-				dmgGib = DMG_WEAKEST;
-			}
-			else if ( damageMultiplier <= 0.85 )
-			{
-				dmgGib = DMG_WEAKER;
-			}
-			else if ( damageMultiplier >= 1.25 )
-			{
-				dmgGib = resistance == 0 ? DMG_STRONGEST : DMG_WEAKER;
-			}
-			else if ( damageMultiplier >= 1.15 )
-			{
-				dmgGib = resistance == 0 ? DMG_STRONGER : DMG_WEAKER;
-			}
-			else if ( resistance > 0 )
-			{
-				dmgGib = DMG_WEAKEST;
-			}
-
-			int damage = element.damage;
-			damage += damage * ((my.actmagicSpellbookBonus / 100.f) + getBonusFromCasterOfSpellElement(parent, nullptr, &element, SPELL_DRAIN_SOUL));
-			//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
-			damage /= (1 + (int)resistance);
-			damage *= damageMultiplier;
-
-			if ( parent )
-			{
-				Stat* casterStats = parent->getStats();
-				if ( casterStats && casterStats->type == LICH_ICE )
-				{
-					damage *= 2;
-				}
-			}
-
-			int damageHP = hitstats->HP;
-			int damageMP = hitstats->MP;
-			hit.entity->modHP(-damage);
-			if ( damage > hitstats->MP )
-			{
-				damage = hitstats->MP;
-			}
-			if ( parent && parent->behavior == &actPlayer )
-			{
-				damage /= 4; // reduced mana steal
-			}
-			hit.entity->drainMP(damage);
-
-			damageHP -= hitstats->HP;
-			damageMP -= hitstats->MP;
-
-			// write the obituary
-			if ( parent )
-			{
-				parent->killedByMonsterObituary(hit.entity);
-			}
-
-			// update enemy bar for attacker
-			if ( !strcmp(hitstats->name, "") )
-			{
-				updateEnemyBar(parent, hit.entity, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP,
-					false, dmgGib);
-			}
-			else
-			{
-				updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP,
-					false, dmgGib);
-			}
-
-			Uint32 color = makeColorRGB(255, 0, 0);
-
-			int player = -1;
-			if ( hit.entity->behavior == &actPlayer )
-			{
-				player = hit.entity->skill[2];
-			}
-
-			if ( hitstats->HP <= 0 && parent )
-			{
-				parent->awardXP(hit.entity, true, true);
-				spawnBloodVialOnMonsterDeath(hit.entity, hitstats, parent);
-			}
-
-			if ( damageHP > 0 && parent )
-			{
-				Entity* spellEntity = createParticleSapCenter(parent, hit.entity, SPELL_DRAIN_SOUL, my.sprite, my.sprite);
-				if ( spellEntity )
-				{
-					playSoundEntity(&my, 167, 128); // succeeded spell sound
-					playSoundEntity(&my, 28, 128); // damage
-					spellEntity->skill[7] = damageHP; // damage taken to HP
-					spellEntity->skill[8] = damageMP; // damage taken tp MP
-
-					// hit messages
-					if ( player >= 0 )
-					{
-						color = makeColorRGB(255, 0, 0);
-						messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(2441));
-					}
-
-					if ( parent )
-					{
-						color = makeColorRGB(0, 255, 0);
-						if ( parent->behavior == &actPlayer )
-						{
-							messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(2440), Language::get(2439), MSG_COMBAT);
-						}
-					}
-				}
-			}
-			else
-			{
-				playSoundEntity(&my, 163, 128); // failed spell sound
-				// hit messages
-				if ( player >= 0 )
-				{
-					color = makeColorRGB(0, 255, 0);
-					messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(2444));
-				}
-
-				if ( parent )
-				{
-					color = makeColorRGB(255, 255, 255);
-					if ( parent->behavior == &actPlayer )
-					{
-						messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(2443), Language::get(2442), MSG_COMBAT);
-					}
-				}
-			}
-		}
-		else
-		{
-			bool forceFurnitureDamage = false;
-			if ( parent )
-			{
-				Stat* casterStats = parent->getStats();
-				if ( casterStats && casterStats->type == SHOPKEEPER )
-				{
-					forceFurnitureDamage = true;
-				}
-			}
-
-			if ( forceFurnitureDamage )
-			{
-				if ( hit.entity->isDamageableCollider() && hit.entity->isColliderDamageableByMagic() )
-				{
-					int damage = element.damage;
-					damage += (my.actmagicSpellbookBonus * damage);
-					//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
-					damage /= (1 + (int)resistance);
-
-					hit.entity->colliderHandleDamageMagic(damage, my, parent);
-					return;
-				}
-				else if ( hit.entity->behavior == &actChest || hit.entity->isInertMimic() )
-				{
-					int damage = element.damage;
-					damage += (my.actmagicSpellbookBonus * damage);
-					damage /= (1 + (int)resistance);
-					hit.entity->chestHandleDamageMagic(damage, my, parent);
-					return;
-				}
-				else if ( hit.entity->behavior == &actFurniture )
-				{
-					int damage = element.damage;
-					damage += (my.actmagicSpellbookBonus * damage);
-					damage /= (1 + (int)resistance);
-					int oldHP = hit.entity->furnitureHealth;
-					hit.entity->furnitureHealth -= damage;
-					if ( parent )
-					{
-						if ( parent->behavior == &actPlayer )
-						{
-							bool destroyed = oldHP > 0 && hit.entity->furnitureHealth <= 0;
-							if ( destroyed )
-							{
-								gameModeManager.currentSession.challengeRun.updateKillEvent(hit.entity);
-							}
-							switch ( hit.entity->furnitureType )
-							{
-							case FURNITURE_CHAIR:
-								if ( destroyed )
-								{
-									messagePlayer(parent->skill[2], MESSAGE_COMBAT, Language::get(388));
-								}
-								updateEnemyBar(parent, hit.entity, Language::get(677), hit.entity->furnitureHealth, hit.entity->furnitureMaxHealth,
-									false, DamageGib::DMG_DEFAULT);
-								break;
-							case FURNITURE_TABLE:
-								if ( destroyed )
-								{
-									messagePlayer(parent->skill[2], MESSAGE_COMBAT, Language::get(389));
-								}
-								updateEnemyBar(parent, hit.entity, Language::get(676), hit.entity->furnitureHealth, hit.entity->furnitureMaxHealth,
-									false, DamageGib::DMG_DEFAULT);
-								break;
-							case FURNITURE_BED:
-								if ( destroyed )
-								{
-									messagePlayer(parent->skill[2], MESSAGE_COMBAT, Language::get(2508), Language::get(2505));
-								}
-								updateEnemyBar(parent, hit.entity, Language::get(2505), hit.entity->furnitureHealth, hit.entity->furnitureMaxHealth,
-									false, DamageGib::DMG_DEFAULT);
-								break;
-							case FURNITURE_BUNKBED:
-								if ( destroyed )
-								{
-									messagePlayer(parent->skill[2], MESSAGE_COMBAT, Language::get(2508), Language::get(2506));
-								}
-								updateEnemyBar(parent, hit.entity, Language::get(2506), hit.entity->furnitureHealth, hit.entity->furnitureMaxHealth,
-									false, DamageGib::DMG_DEFAULT);
-								break;
-							case FURNITURE_PODIUM:
-								if ( destroyed )
-								{
-									messagePlayer(parent->skill[2], MESSAGE_COMBAT, Language::get(2508), Language::get(2507));
-								}
-								updateEnemyBar(parent, hit.entity, Language::get(2507), hit.entity->furnitureHealth, hit.entity->furnitureMaxHealth,
-									false, DamageGib::DMG_DEFAULT);
-								break;
-							default:
-								break;
-							}
-						}
-					}
-					playSoundEntity(hit.entity, 28, 128);
-				}
-			}
-		}
-		spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my.sprite);
-	}
-	else
-	{
-		spawnMagicEffectParticles(my.x, my.y, my.z, my.sprite);
-	}
-	return;
-}
-
-spell_t* spellEffectVampiricAura(Entity* caster, spell_t* spell, int extramagic_to_use)
-{
-	if ( !caster )
-	{
-		return nullptr;
-	}
-	//Also refactor the duration determining code.
-	node_t* node = spell->elements.first;
-	if ( !node )
-	{
-		return nullptr;
-	}
-	spellElement_t* element = static_cast<spellElement_t*>(node->element);
-	if ( !element )
-	{
-		return nullptr;
-	}
-	Stat* myStats = caster->getStats();
-	if ( !myStats )
-	{
-		return nullptr;
-	}
-
-	bool newbie = false;
-	if ( caster->behavior == &actPlayer )
-	{
-		newbie = isSpellcasterBeginner(caster->skill[2], caster);
-	}
-	else
-	{
-		newbie = isSpellcasterBeginner(-1, caster);
-	}
-
-	int duration = element->duration; // duration in ticks.
-	//duration += (((element->mana + extramagic_to_use) - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->duration;
-	node_t* spellnode = list_AddNodeLast(&myStats->magic_effects);
-	spellnode->element = copySpell(spell); //We need to save the spell since this is a channeled spell.
-	spell_t* channeled_spell = (spell_t*)(spellnode->element);
-	channeled_spell->magic_effects_node = spellnode;
-	spellnode->size = sizeof(spell_t);
-	((spell_t*)spellnode->element)->caster = caster->getUID();
-	spellnode->deconstructor = &spellDeconstructor;
-	//if ( newbie )
-	//{
-	//	//This guy's a newbie. There's a chance they've screwed up and negatively impacted the efficiency of the spell.
-	//	int chance = local_rng.rand() % 10;
-	//	// spellcasting power is 0 to 100, based on spellcasting and intelligence.
-	//	int spellcastingPower = std::min(std::max(0, myStats->PROFICIENCIES[PRO_SPELLCASTING] + statGetINT(myStats, caster)), 100);
-	//	if ( chance >= spellcastingPower / 10 )
-	//	{
-	//		duration -= local_rng.rand() % (1000 / (spellcastingPower + 1)); // reduce the duration by 0-20 seconds
-	//	}
-	//	if ( duration < 50 )
-	//	{
-	//		duration = 50;    //Range checking.
-	//	}
-	//}
-	duration /= getCostOfSpell((spell_t*)spellnode->element);
-	channeled_spell->channel_duration = duration; //Tell the spell how long it's supposed to last so that it knows what to reset its timer to.
-	caster->setEffect(EFF_VAMPIRICAURA, true, duration, true);
-	for ( int i = 0; i < MAXPLAYERS; ++i )
-	{
-		if ( players[i] && caster && (caster == players[i]->entity) )
-		{
-			serverUpdateEffects(i);
-			Uint32 color = makeColorRGB(0, 255, 0);
-			messagePlayerColor(i, MESSAGE_COMBAT, color, Language::get(2477));
-			playSoundPlayer(i, 403, 32);
-		}
-	}
-
-	playSoundEntity(caster, 167, 128);
-	createParticleDropRising(caster, 600, 0.7);
-	serverSpawnMiscParticles(caster, PARTICLE_EFFECT_VAMPIRIC_AURA, 600);
-	return channeled_spell;
-}
-
-int getCharmMonsterDifficulty(Entity& my, Stat& myStats)
-{
-	int difficulty = 0;
-
-	switch ( myStats.type )
-	{
-	default:
-		difficulty = 0;
-		break;
-	case HUMAN:
-	case RAT:
-	case SLIME:
-	case SPIDER:
-	case SKELETON:
-	case SCORPION:
-	case SHOPKEEPER:
-		difficulty = 0;
-		break;
-	case GOBLIN:
-	case TROLL:
-	case GHOUL:
-	case GNOME:
-	case SCARAB:
-	case AUTOMATON:
-	case SUCCUBUS:
-		difficulty = 1;
-		break;
-	case CREATURE_IMP:
-	case DEMON:
-	case KOBOLD:
-	case INCUBUS:
-	case INSECTOID:
-	case GOATMAN:
-		difficulty = 2;
-		break;
-	case VAMPIRE:
-		difficulty = 5;
-		break;
-	case CRYSTALGOLEM: //fskin note: due to crystal golems being bonkers to charm, it's now basically impossible without confusing them first
-		difficulty = 10;
-		break;
-	case COCKATRICE:
-	case SHADOW:
-	case LICH:
-	case DEVIL:
-	case LICH_ICE:
-	case LICH_FIRE:
-	case MINOTAUR:
-	case MIMIC:
-		difficulty = 666;
-		break;
-	}
-
-
-	/************** CHANCE CALCULATION ***********/
-	if ( myStats.EFFECTS[EFF_CONFUSED] || myStats.EFFECTS[EFF_DRUNK] || my.behavior == &actPlayer )
-	{
-		difficulty -= 1; // players and confused/drunk monsters have lower resistance.
-	}
-	if (myStats.EFFECTS[EFF_CONFUSED] && myStats.type == CRYSTALGOLEM)
-	{
-		difficulty -= 4; // fskin note: crystal golems are easier to charm after confusion, otherwise quite impossible
-	}
-	if ( strcmp(myStats.name, "") && !monsterNameIsGeneric(myStats) )
-	{
-		difficulty += 1; // minibosses +1 difficulty.
-	}
-	return difficulty;
-}
-
-void spellEffectCharmMonster(Entity& my, spellElement_t& element, Entity* parent, int resistance, bool magicstaff)
-{
-	if ( hit.entity )
-	{
-		if ( (hit.entity->behavior == &actMonster && !hit.entity->isInertMimic()) || hit.entity->behavior == &actPlayer )
-		{
-			if ( !(svFlags & SV_FLAG_FRIENDLYFIRE) )
-			{
-				// test for friendly fire
-				if ( parent && parent->checkFriend(hit.entity) )
-				{
-					return;
-				}
-			}
-
-			Stat* hitstats = hit.entity->getStats();
-			if ( !hitstats )
-			{
-				return;
-			}
-
-			Uint32 color = makeColorRGB(0, 255, 0);
-
-			int player = -1;
-			if ( hit.entity->behavior == &actPlayer )
-			{
-				player = hit.entity->skill[2];
-			}
-
-			int difficulty = getCharmMonsterDifficulty(*hit.entity, *hitstats);
-
-			int chance = 80;
-			chance -= difficulty * 30;
-			bool allowStealFollowers = false;
-			Stat* casterStats = nullptr;
-			int currentCharmedFollowerCount = 0;
-			if ( parent )
-			{
-				casterStats = parent->getStats();
-				if ( casterStats )
-				{
-					if ( magicstaff )
-					{
-						chance += ((parent->getCHR() + casterStats->getModifiedProficiency(PRO_LEADERSHIP)) / 20) * 10;
-					}
-					else
-					{
-						chance += ((parent->getCHR() + casterStats->getModifiedProficiency(PRO_LEADERSHIP)) / 20) * 5;
-						chance += (parent->getINT() * 2);
-					}
-
-					if ( parent->behavior == &actMonster )
-					{
-						allowStealFollowers = true;
-						if ( casterStats->type == INCUBUS || casterStats->type == SUCCUBUS )
-						{
-							if ( hitstats->type == DEMON || hitstats->type == INCUBUS
-								|| hitstats->type == SUCCUBUS || hitstats->type == CREATURE_IMP
-								|| hitstats->type == GOATMAN )
-							{
-								chance = 100; // bonus for demons.
-							}
-							else if ( difficulty <= 2 )
-							{
-								chance = 80; // special base chance for monsters.
-							}
-						}
-						else if ( difficulty <= 2 )
-						{
-							chance = 60; // special base chance for monsters.
-						}
-					}
-					else if ( parent->behavior == &actPlayer )
-					{
-						// search followers for charmed.
-						for ( node_t* node = casterStats->FOLLOWERS.first; node != NULL; node = node->next )
-						{
-							Uint32* c = (Uint32*)node->element;
-							Entity* follower = nullptr;
-							if ( c )
-							{
-								follower = uidToEntity(*c);
-							}
-							if ( follower )
-							{
-								if ( Stat* followerStats = follower->getStats() )
-								{
-									if ( followerStats->monsterIsCharmed == 1 )
-									{
-										++currentCharmedFollowerCount;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			if ( hit.entity->monsterState == MONSTER_STATE_WAIT )
-			{
-				chance += 10;
-			}
-			chance /= (1 + resistance);
-			/************** END CHANCE CALCULATION ***********/
-
-			// special cases:
-			if ( (hitstats->type == VAMPIRE && MonsterData_t::nameMatchesSpecialNPCName(*hitstats, "bram kindly"))
-				|| (hitstats->type == COCKATRICE && !strncmp(map.name, "Cockatrice Lair", 15))
-//				|| (hitstats->type == CREATURE_IMP && !strncmp(map.name, "The Haunted Castle", 15))
-//				|| (hitstats->type == GOATMAN && !strncmp(map.name, "SkyTown", 15))
-//				|| (hitstats->type == INCUBUS && !strncmp(map.name, "Ozyx' Domain", 15)) //fskin note: used to disable charm but I've backpedaled on this for now
-				|| (hitstats->type == GOATMAN && !strncmp(map.name, "Mages Guild", 15))
-				|| (hitstats->type == SKELETON && !strncmp(map.name, "Mages Guild", 15))
-				|| (hitstats->type == SKELETON && !strncmp(map.name, "Hell Boss", 15))
-				|| (hitstats->type == SKELETON && !strncmp(map.name, "Boss", 15))
-				)
-			{
-				chance = 0;
-			}
-			else if ( hit.entity->behavior == &actMonster 
-				&& (hit.entity->monsterAllySummonRank != 0
-					|| (hitstats->type == INCUBUS && !strncmp(hitstats->name, "inner demon", strlen("inner demon")))) 
-				)
-			{
-				chance = 0; // not allowed to control summons
-			}
-
-			bool doPacify = false;
-
-			if ( parent && hit.entity == parent )
-			{
-				// caster hit themselves somehow... get pacified.
-				int duration = element.duration;
-				duration /= (1 + resistance);
-				if ( hit.entity->setEffect(EFF_PACIFY, true, duration, true) )
-				{
-					playSoundEntity(hit.entity, 168, 128); // Healing.ogg
-					if ( player >= 0 )
-					{
-						color = makeColorRGB(255, 0, 0);
-						messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(3144));
-					}
-					if ( parent )
-					{
-						if ( parent->behavior == &actPlayer )
-						{
-							messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3139), Language::get(3140), MSG_COMBAT);
-						}
-						// update enemy bar for attacker
-						/*if ( !strcmp(hitstats->name, "") )
-						{
-							updateEnemyBar(parent, hit.entity, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP);
-						}
-						else
-						{
-							updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP);
-						}*/
-					}
-				}
-			}
-			else if ( chance <= 0 )
-			{
-				// no effect.
-				playSoundEntity(hit.entity, 163, 64); // FailedSpell1V1.ogg
-				if ( parent && parent->behavior == &actPlayer )
-				{
-					messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(2905), Language::get(2906), MSG_COMBAT);
-					steamAchievementClient(parent->skill[2], "BARONY_ACH_OFF_LIMITS");
-				}
-				if ( player >= 0 )
-				{
-					color = makeColorRGB(0, 255, 0);
-					messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(3141));
-				}
-			}
-			else if ( parent && local_rng.rand() % 100 < chance
-				&& ( (hitstats->leader_uid == 0 && hit.entity->getUID() != casterStats->leader_uid)
-					|| (allowStealFollowers 
-						&& hitstats->leader_uid != parent->getUID() // my target is not already following me
-						&& hit.entity->getUID() != casterStats->leader_uid // my target is not my leader (otherwise we're each other's leader and that's bad)
-						) ) 
-				&& player < 0 
-				&& hitstats->type != SHOPKEEPER
-				&& currentCharmedFollowerCount == 0
-				)
-			{
-				// fully charmed. (players not affected here.)
-				// does not affect shopkeepers
-				// succubus/incubus can steal followers from others, checking to see if they don't already follow them.
-				Entity* whoToFollow = parent;
-				if ( parent->behavior == &actMonster && parent->monsterAllyGetPlayerLeader() )
-				{
-					whoToFollow = parent->monsterAllyGetPlayerLeader();
-				}
-				else if ( parent->behavior == &actMonster )
-				{
-					if (Entity* leaderOfTarget = uidToEntity(casterStats->leader_uid))
-					{
-						whoToFollow = leaderOfTarget;
-						if ( whoToFollow->getUID() == casterStats->leader_uid )
-						{
-							// this is my leader, ignore
-							doPacify = true;
-						}
-						if ( Stat* whoToFollowStats = whoToFollow->getStats() )
-						{
-							if ( whoToFollowStats->leader_uid == parent->getUID() )
-							{
-								// i am their leader, ignore
-								doPacify = true;
-							}
-						}
-					}
-				}
-
-				if ( !doPacify && forceFollower(*whoToFollow, *hit.entity) )
-				{
-					serverSpawnMiscParticles(hit.entity, PARTICLE_EFFECT_CHARM_MONSTER, 0);
-					createParticleCharmMonster(hit.entity);
-					playSoundEntity(hit.entity, 174, 64); // WeirdSpell.ogg
-					if ( whoToFollow->behavior == &actPlayer )
-					{
-						whoToFollow->increaseSkill(PRO_LEADERSHIP);
-						messagePlayerMonsterEvent(whoToFollow->skill[2], color, *hitstats, Language::get(3137), Language::get(3138), MSG_COMBAT);
-						hit.entity->monsterAllyIndex = whoToFollow->skill[2];
-						if ( multiplayer == SERVER )
-						{
-							serverUpdateEntitySkill(hit.entity, 42); // update monsterAllyIndex for clients.
-						}
-						if ( hit.entity->monsterTarget == whoToFollow->getUID() )
-						{
-							hit.entity->monsterReleaseAttackTarget();
-						}
-					}
-
-					hit.entity->setEffect(EFF_CONFUSED, false, 0, false);
-
-					// change the color of the hit entity.
-					hit.entity->flags[USERFLAG2] = true;
-					serverUpdateEntityFlag(hit.entity, USERFLAG2);
-					hitstats->monsterIsCharmed = 1;
-					if ( monsterChangesColorWhenAlly(hitstats) )
-					{
-						int bodypart = 0;
-						for ( node_t* node = (hit.entity)->children.first; node != nullptr; node = node->next )
-						{
-							if ( bodypart >= LIMB_HUMANOID_TORSO )
-							{
-								Entity* tmp = (Entity*)node->element;
-								if ( tmp )
-								{
-									tmp->flags[USERFLAG2] = true;
-									//serverUpdateEntityFlag(tmp, USERFLAG2);
-								}
-							}
-							++bodypart;
-						}
-					}
-					if ( whoToFollow->behavior == &actMonster )
-					{
-						if ( whoToFollow->monsterTarget == hit.entity->getUID() )
-						{
-							whoToFollow->monsterReleaseAttackTarget(); // monsters stop attacking their new friend.
-						}
-
-						// handle players losing their allies.
-						if ( hit.entity->monsterAllyIndex != -1 )
-						{
-							hit.entity->monsterAllyIndex = -1;
-							if ( multiplayer == SERVER )
-							{
-								serverUpdateEntitySkill(hit.entity, 42); // update monsterAllyIndex for clients.
-							}
-						}
-					}
-				}
-			}
-			else
-			{
-				doPacify = true;
-			}
-
-			if ( doPacify )
-			{
-				// had a chance, or currently in service of another monster, or a player, or spell no parent, failed to completely charm. 
-				// loses will to attack.
-				int duration = element.duration;
-				duration /= (1 + resistance);
-				if ( hitstats->type == SHOPKEEPER )
-				{
-					duration = 100;
-				}
-				if ( hit.entity->setEffect(EFF_PACIFY, true, duration, true) )
-				{
-					playSoundEntity(hit.entity, 168, 128); // Healing.ogg
-					if ( player >= 0 )
-					{
-						color = makeColorRGB(255, 0, 0);
-						messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(3144));
-					}
-					if ( parent )
-					{
-						if ( parent->behavior == &actPlayer )
-						{
-							messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3139), Language::get(3140), MSG_COMBAT);
-							if ( currentCharmedFollowerCount > 0 && hit.entity->monsterAllyGetPlayerLeader() != parent )
-							{
-								messagePlayer(parent->skill[2], MESSAGE_MISC, Language::get(3327));
-							}
-						}
-						// update enemy bar for attacker
-						/*if ( !strcmp(hitstats->name, "") )
-						{
-							updateEnemyBar(parent, hit.entity, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP);
-						}
-						else
-						{
-							updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP);
-						}*/
-					}
-					if ( hitstats->type == SHOPKEEPER && parent && parent->behavior == &actPlayer )
-					{
-						// reverses shop keeper grudges.
-						hit.entity->monsterReleaseAttackTarget();
-						for ( node_t* node = map.creatures->first; node != nullptr; node = node->next )
-						{
-							Entity* entity = (Entity*)node->element;
-							if ( !entity ) { continue; }
-							if ( entity->behavior == &actMonster && entity != hit.entity )
-							{
-								if ( entity->monsterAllyGetPlayerLeader() && ((Uint32)entity->monsterTarget == hit.entity->getUID()) )
-								{
-									entity->monsterReleaseAttackTarget(); // player allies stop attacking this target
-								}
-							}
-						}
-						ShopkeeperPlayerHostility.resetPlayerHostility(parent->skill[2]);
-					}
-				}
-				else
-				{
-					// resists the charm.
-					playSoundEntity(hit.entity, 163, 64); // FailedSpell1V1.ogg
-					if ( parent && parent->behavior == &actPlayer )
-					{
-						color = makeColorRGB(255, 0, 0);
-						messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3142), Language::get(3143), MSG_COMBAT);
-					}
-					if ( player >= 0 )
-					{
-						color = makeColorRGB(0, 255, 0);
-						messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(3141));
-					}
-				}
-			}
-		}
-		spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my.sprite);
-	}
-	else
-	{
-		spawnMagicEffectParticles(my.x, my.y, my.z, my.sprite);
-	}
-	return;
-}
-
-Entity* spellEffectPolymorph(Entity* target, Entity* parent, bool fromMagicSpell, int customDuration)
-{
-	int effectDuration = 0;
-	effectDuration = TICKS_PER_SECOND * 60 * (4 + local_rng.rand() % 3); // 4-6 minutes
-	if ( customDuration > 0 )
-	{
-		effectDuration = customDuration;
-	}
-	if ( !target || !target->getStats() )
-	{
-		if ( parent && parent->behavior == &actPlayer )
-		{
-			messagePlayer(parent->skill[2], MESSAGE_HINT, Language::get(3191)); // had no effect
-		}
-		return nullptr;
-	}
-
-	Stat* targetStats = target->getStats();
-
-	if ( targetStats->type == LICH || targetStats->type == SHOPKEEPER || targetStats->type == DEVIL
-		|| targetStats->type == MINOTAUR || targetStats->type == LICH_FIRE || targetStats->type == LICH_ICE
-		|| (target->behavior == &actMonster && target->monsterAllySummonRank != 0)
-		|| targetStats->type == MIMIC
-		|| (targetStats->type == INCUBUS && !strncmp(targetStats->name, "inner demon", strlen("inner demon")))
-		|| targetStats->type == SENTRYBOT || targetStats->type == SPELLBOT || targetStats->type == GYROBOT
-		|| targetStats->type == DUMMYBOT
-		)
-	{
-		if ( parent && parent->behavior == &actPlayer )
-		{
-			messagePlayer(parent->skill[2], MESSAGE_HINT, Language::get(3191)); // had no effect
-		}
-		return nullptr;
-	}
-
-	if ( target->behavior == &actMonster )
-	{
-		auto& rng = target->entity_rng ? *target->entity_rng : local_rng;
-		Monster monsterSummonType;
-
-		if ( targetStats->type == SHADOW )
-		{
-			monsterSummonType = CREATURE_IMP; // shadows turn to imps
-		}
-		else
-		{
-	        std::set<Monster> typesToSkip
-			{
-	            LICH, SHOPKEEPER, DEVIL, MIMIC, CRAB, OCTOPUS,
-	            MINOTAUR, LICH_FIRE, LICH_ICE, NOTHING,
-	            HUMAN, SENTRYBOT, SPELLBOT, GYROBOT,
-	            DUMMYBOT
-	        };
-			typesToSkip.insert(targetStats->type);
-			if ( target->monsterAllyGetPlayerLeader() )
-			{
-				typesToSkip.insert(SHADOW);
-			}
-
-			std::vector<Monster> possibleTypes;
-			for ( int i = 0; i < NUMMONSTERS; ++i )
-			{
-				const Monster mon = static_cast<Monster>(i);
-				if ( typesToSkip.find(mon) == typesToSkip.end() )
-				{
-					possibleTypes.push_back(mon);
-				}
-			}
-			monsterSummonType = possibleTypes.at(rng.rand() % possibleTypes.size());
-		}
-
-		bool summonCanEquipItems = false;
-		bool hitMonsterCanTransferEquipment = false;
-
-		switch ( monsterSummonType )
-		{
-			case RAT:
-			case SLIME:
-			case TROLL:
-			case SPIDER:
-			case GHOUL:
-			case SCORPION:
-			case CREATURE_IMP:
-			case DEMON:
-			case SCARAB:
-			case CRYSTALGOLEM:
-			case SHADOW:
-			case COCKATRICE:
-				summonCanEquipItems = false;
-				break;
-			default:
-				summonCanEquipItems = true;
-				break;
-		}
-
-		switch ( targetStats->type )
-		{
-			case RAT:
-			case SLIME:
-			case TROLL:
-			case SPIDER:
-			case GHOUL:
-			case SCORPION:
-			case CREATURE_IMP:
-			case DEMON:
-			case SCARAB:
-			case CRYSTALGOLEM:
-			case SHADOW:
-			case COCKATRICE:
-				hitMonsterCanTransferEquipment = false;
-				break;
-			default:
-				hitMonsterCanTransferEquipment = true;
-				break;
-		}
-
-		bool fellToDeath = false;
-		bool tryReposition = false;
-		bool fellInLava = false;
-		bool fellInWater = false;
-
-		if ( targetStats->EFFECTS[EFF_LEVITATING]
-			&& (monsterSummonType != CREATURE_IMP && monsterSummonType != COCKATRICE && monsterSummonType != SHADOW) )
-		{
-			// check if there's a floor...
-			int x, y, u, v;
-			x = std::min(std::max<unsigned int>(1, target->x / 16), map.width - 2);
-			y = std::min(std::max<unsigned int>(1, target->y / 16), map.height - 2);
-			for ( u = x - 1; u <= x + 1; u++ )
-			{
-				for ( v = y - 1; v <= y + 1; v++ )
-				{
-					if ( entityInsideTile(target, u, v, 0) )   // no floor
-					{
-						if ( !map.tiles[0 + u * MAPLAYERS + v * MAPLAYERS * map.height] )
-						{
-							// no floor.
-							fellToDeath = true;
-							tryReposition = true;
-						}
-						else if ( lavatiles[map.tiles[0 + u * MAPLAYERS + v * MAPLAYERS * map.height]] )
-						{
-							fellInLava = true;
-							tryReposition = true;
-						}
-						else if ( swimmingtiles[map.tiles[0 + u * MAPLAYERS + v * MAPLAYERS * map.height]] )
-						{
-							fellInWater = true;
-							tryReposition = true;
-						}
-						else
-						{
-							tryReposition = true; // something else??
-						}
-						break;
-					}
-				}
-				if ( tryReposition )
-				{
-					break;
-				}
-			}
-		}
-
-		Entity* summonedEntity = nullptr;
-		if ( tryReposition )
-		{
-			summonedEntity = summonMonster(monsterSummonType, target->x, target->y);
-			if ( !summonedEntity && (fellToDeath || fellInLava) )
-			{
-				summonedEntity = summonMonster(monsterSummonType, target->x, target->y, true); // force try, kill monster later.
-			}
-		}
-		else
-		{
-			summonedEntity = summonMonster(monsterSummonType, target->x, target->y, true);
-		}
-
-		if ( !summonedEntity )
-		{
-			if ( parent && parent->behavior == &actPlayer )
-			{
-				if ( fellInWater )
-				{
-					messagePlayer(parent->skill[2], MESSAGE_STATUS, Language::get(3192)); // water make no work :<
-				}
-				else
-				{
-					messagePlayer(parent->skill[2], MESSAGE_STATUS, Language::get(3191)); // failed for some other reason
-				}
-			}
-			return nullptr;
-		}
-
-		summonedEntity->seedEntityRNG(rng.getU32());
-
-		Stat* summonedStats = summonedEntity->getStats();
-		if ( !summonedStats )
-		{
-			if ( parent && parent->behavior == &actPlayer )
-			{
-				messagePlayer(parent->skill[2], MESSAGE_HINT, Language::get(3191));
-			}
-			return nullptr;
-		}
-
-		// remove equipment from new monster
-		if ( summonCanEquipItems )
-		{
-			// monster does not have generated equipment yet, disable from generating.
-			summonedStats->EDITOR_ITEMS[ITEM_SLOT_WEAPON] = 0;
-			summonedStats->EDITOR_ITEMS[ITEM_SLOT_SHIELD] = 0;
-			summonedStats->EDITOR_ITEMS[ITEM_SLOT_ARMOR] = 0;
-			summonedStats->EDITOR_ITEMS[ITEM_SLOT_HELM] = 0;
-			summonedStats->EDITOR_ITEMS[ITEM_SLOT_GLOVES] = 0;
-			summonedStats->EDITOR_ITEMS[ITEM_SLOT_BOOTS] = 0;
-			summonedStats->EDITOR_ITEMS[ITEM_SLOT_RING] = 0;
-			summonedStats->EDITOR_ITEMS[ITEM_SLOT_CLOAK] = 0;
-			summonedStats->EDITOR_ITEMS[ITEM_SLOT_AMULET] = 0;
-		}
-
-		for ( int x = ITEM_SLOT_INV_1; x <= ITEM_SLOT_INV_6; x = x + ITEM_SLOT_NUMPROPERTIES )
-		{
-			if ( summonedStats->EDITOR_ITEMS[x] == 1 && summonedStats->EDITOR_ITEMS[x + ITEM_SLOT_CATEGORY] == 0 )
-			{
-				summonedStats->EDITOR_ITEMS[x] = 0; //clear default item in inventory
-			}
-		}
-
-		// copy stats from target to new creature.
-		summonedStats->HP = targetStats->HP;
-		summonedStats->OLDHP = targetStats->OLDHP;
-		summonedStats->MP = targetStats->MP;
-		summonedStats->MAXHP = targetStats->MAXHP;
-		summonedStats->MAXMP = targetStats->MAXMP;
-		summonedStats->STR = targetStats->STR;
-		summonedStats->DEX = targetStats->DEX;
-		summonedStats->CON = targetStats->CON;
-		summonedStats->INT = targetStats->INT;
-		summonedStats->PER = targetStats->PER;
-		//summonedStats->CHR = targetStats->CHR;
-		summonedStats->LVL = targetStats->LVL;
-		summonedStats->GOLD = targetStats->GOLD;
-
-		// don't apply random stats again
-		summonedStats->RANDOM_HP = 0;
-		summonedStats->RANDOM_MP = 0;
-		summonedStats->RANDOM_MAXHP = 0;
-		summonedStats->RANDOM_MAXMP = 0;
-		summonedStats->RANDOM_STR = 0;
-		summonedStats->RANDOM_DEX = 0;
-		summonedStats->RANDOM_CON = 0;
-		summonedStats->RANDOM_INT = 0;
-		summonedStats->RANDOM_PER = 0;
-		summonedStats->RANDOM_CHR = 0;
-		summonedStats->RANDOM_LVL = 0;
-		summonedStats->RANDOM_GOLD = 0;
-		summonedStats->MISC_FLAGS[STAT_FLAG_MONSTER_DISABLE_HC_SCALING] = 1;
-		summonedStats->leader_uid = targetStats->leader_uid;
-		if ( summonedStats->leader_uid != 0 && summonedStats->type != SHADOW )
-		{
-			Entity* leader = uidToEntity(summonedStats->leader_uid);
-			if ( leader )
-			{
-				// lose old ally
-				if ( target->monsterAllyIndex != -1 )
-				{
-					int playerFollower = MAXPLAYERS;
-					for ( int c = 0; c < MAXPLAYERS; c++ )
-					{
-						if ( players[c] && players[c]->entity )
-						{
-							if ( targetStats->leader_uid == players[c]->entity->getUID() )
-							{
-								playerFollower = c;
-								if ( stats[c] )
-								{
-									for ( node_t* allyNode = stats[c]->FOLLOWERS.first; allyNode != nullptr; allyNode = allyNode->next )
-									{
-										if ( *((Uint32*)allyNode->element) == target->getUID() )
-										{
-											list_RemoveNode(allyNode);
-											if ( !players[c]->isLocalPlayer() )
-											{
-												serverRemoveClientFollower(c, target->getUID());
-											}
-											else
-											{
-												if ( FollowerMenu[c].recentEntity && (FollowerMenu[c].recentEntity->getUID() == 0
-													|| FollowerMenu[c].recentEntity->getUID() == target->getUID()) )
-												{
-													FollowerMenu[c].recentEntity = nullptr;
-												}
-											}
-											break;
-										}
-									}
-								}
-								break;
-							}
-						}
-					}
-				}
-
-				if ( forceFollower(*leader, *summonedEntity) )
-				{
-					if ( leader->behavior == &actPlayer )
-					{
-						summonedEntity->monsterAllyIndex = leader->skill[2];
-						if ( multiplayer == SERVER )
-						{
-							serverUpdateEntitySkill(summonedEntity, 42); // update monsterAllyIndex for clients.
-						}
-
-					}
-					// change the color of the hit entity.
-					summonedEntity->flags[USERFLAG2] = true;
-					serverUpdateEntityFlag(summonedEntity, USERFLAG2);
-					if ( monsterChangesColorWhenAlly(summonedStats) )
-					{
-						int bodypart = 0;
-						for ( node_t* node = summonedEntity->children.first; node != nullptr; node = node->next )
-						{
-							if ( bodypart >= LIMB_HUMANOID_TORSO )
-							{
-								Entity* tmp = (Entity*)node->element;
-								if ( tmp )
-								{
-									tmp->flags[USERFLAG2] = true;
-									//serverUpdateEntityFlag(tmp, USERFLAG2);
-								}
-							}
-							++bodypart;
-						}
-					}
-				}
-			}
-		}
-		if ( targetStats->type == HUMAN )
-		{
-			strcpy(summonedStats->name, targetStats->name);
-		}
-
-		if ( hitMonsterCanTransferEquipment && summonCanEquipItems )
-		{
-			// weapon
-			Item** slot = itemSlot(targetStats, targetStats->weapon);
-			if ( slot )
-			{
-				summonedStats->weapon = newItem((*slot)->type, (*slot)->status, (*slot)->beatitude,
-					(*slot)->count, (*slot)->appearance, (*slot)->identified, nullptr);
-			}
-
-			// shield
-			slot = itemSlot(targetStats, targetStats->shield);
-			if ( slot )
-			{
-				summonedStats->shield = newItem((*slot)->type, (*slot)->status, (*slot)->beatitude,
-					(*slot)->count, (*slot)->appearance, (*slot)->identified, nullptr);
-			}
-
-			// breastplate
-			slot = itemSlot(targetStats, targetStats->breastplate);
-			if ( slot )
-			{
-				if ( monsterSummonType == KOBOLD || monsterSummonType == GNOME )
-				{
-					// kobold/gnomes can't equip breastplate, drop it!
-					Entity* dropped = dropItemMonster(targetStats->breastplate, target, targetStats);
-					if ( dropped )
-					{
-						dropped->flags[USERFLAG1] = true;
-					}
-				}
-				else
-				{
-					summonedStats->breastplate = newItem((*slot)->type, (*slot)->status, (*slot)->beatitude,
-						(*slot)->count, (*slot)->appearance, (*slot)->identified, nullptr);
-				}
-			}
-
-			// shoes
-			slot = itemSlot(targetStats, targetStats->shoes);
-			if ( slot )
-			{
-				summonedStats->shoes = newItem((*slot)->type, (*slot)->status, (*slot)->beatitude,
-					(*slot)->count, (*slot)->appearance, (*slot)->identified, nullptr);
-			}
-
-			// helm
-			slot = itemSlot(targetStats, targetStats->helmet);
-			if ( slot )
-			{
-				if ( monsterSummonType == KOBOLD || monsterSummonType == GNOME )
-				{
-					// kobold/gnomes can't equip non-hoods, drop the rest
-					if ( (*slot)->type == HAT_HOOD
-						|| (*slot)->type == HAT_HOOD_SILVER
-						|| (*slot)->type == HAT_HOOD_RED
-						|| (*slot)->type == HAT_HOOD_APPRENTICE
-						|| (*slot)->type == HAT_HOOD_WHISPERS
-						|| (*slot)->type == HAT_HOOD_ASSASSIN )
-					{
-						summonedStats->helmet = newItem((*slot)->type, (*slot)->status, (*slot)->beatitude,
-							(*slot)->count, (*slot)->appearance, (*slot)->identified, nullptr);
-					}
-					else
-					{
-						Entity* dropped = dropItemMonster(targetStats->helmet, target, targetStats);
-						if ( dropped )
-						{
-							dropped->flags[USERFLAG1] = true;
-						}
-					}
-				}
-				else
-				{
-					summonedStats->helmet = newItem((*slot)->type, (*slot)->status, (*slot)->beatitude,
-						(*slot)->count, (*slot)->appearance, (*slot)->identified, nullptr);
-				}
-			}
-
-			// amulet
-			slot = itemSlot(targetStats, targetStats->amulet);
-			if ( slot )
-			{
-				summonedStats->amulet = newItem((*slot)->type, (*slot)->status, (*slot)->beatitude,
-					(*slot)->count, (*slot)->appearance, (*slot)->identified, nullptr);
-			}
-
-			// ring
-			slot = itemSlot(targetStats, targetStats->ring);
-			if ( slot )
-			{
-				summonedStats->ring = newItem((*slot)->type, (*slot)->status, (*slot)->beatitude,
-					(*slot)->count, (*slot)->appearance, (*slot)->identified, nullptr);
-			}
-
-			// cloak
-			slot = itemSlot(targetStats, targetStats->cloak);
-			if ( slot )
-			{
-				summonedStats->cloak = newItem((*slot)->type, (*slot)->status, (*slot)->beatitude,
-					(*slot)->count, (*slot)->appearance, (*slot)->identified, nullptr);
-			}
-
-			// gloves
-			slot = itemSlot(targetStats, targetStats->gloves);
-			if ( slot )
-			{
-				if ( monsterSummonType == KOBOLD || monsterSummonType == GNOME )
-				{
-					// kobold/gnomes can't equip gloves, drop it!
-					Entity* dropped = dropItemMonster(targetStats->gloves, target, targetStats);
-					if ( dropped )
-					{
-						dropped->flags[USERFLAG1] = true;
-					}
-				}
-				else
-				{
-					summonedStats->gloves = newItem((*slot)->type, (*slot)->status, (*slot)->beatitude,
-						(*slot)->count, (*slot)->appearance, (*slot)->identified, nullptr);
-				}
-			}
-		}
-		else if ( hitMonsterCanTransferEquipment && !summonCanEquipItems )
-		{
-			Entity* dropped = dropItemMonster(targetStats->weapon, target, targetStats);
-			if ( dropped )
-			{
-				dropped->flags[USERFLAG1] = true;
-			}
-			dropped = dropItemMonster(targetStats->shield, target, targetStats);
-			if ( dropped )
-			{
-				dropped->flags[USERFLAG1] = true;
-			}
-			dropped = dropItemMonster(targetStats->breastplate, target, targetStats);
-			if ( dropped )
-			{
-				dropped->flags[USERFLAG1] = true;
-			}
-			dropped = dropItemMonster(targetStats->shoes, target, targetStats);
-			if ( dropped )
-			{
-				dropped->flags[USERFLAG1] = true;
-			}
-			dropped = dropItemMonster(targetStats->gloves, target, targetStats);
-			if ( dropped )
-			{
-				dropped->flags[USERFLAG1] = true;
-			}
-			dropped = dropItemMonster(targetStats->ring, target, targetStats);
-			if ( dropped )
-			{
-				dropped->flags[USERFLAG1] = true;
-			}
-			dropped = dropItemMonster(targetStats->amulet, target, targetStats);
-			if ( dropped )
-			{
-				dropped->flags[USERFLAG1] = true;
-			}
-			dropped = dropItemMonster(targetStats->cloak, target, targetStats);
-			if ( dropped )
-			{
-				dropped->flags[USERFLAG1] = true;
-			}
-			dropped = dropItemMonster(targetStats->helmet, target, targetStats);
-			if ( dropped )
-			{
-				dropped->flags[USERFLAG1] = true;
-			}
-		}
-
-		node_t* nextnode = nullptr;
-		for ( node_t* node = targetStats->inventory.first; node; node = nextnode )
-		{
-			nextnode = node->next;
-			Item* item = (Item*)node->element;
-			if ( item && item->appearance != MONSTER_ITEM_UNDROPPABLE_APPEARANCE && itemSlot(targetStats, item) == nullptr )
-			{
-				Item* copiedItem = newItem(item->type, item->status, item->beatitude, item->count, item->appearance, item->identified, &summonedStats->inventory);
-				if ( item->node )
-				{
-					list_RemoveNode(item->node);
-				}
-				else
-				{
-					free(item);
-				}
-			}
-		}
-
-		if ( parent && parent->behavior == &actPlayer )
-		{
-			Uint32 color = makeColorRGB(0, 255, 0);
-			bool namedMonsterAsGeneric = monsterNameIsGeneric(*targetStats);
-			// the %s polymorph into a %s!
-			if ( !strcmp((*targetStats).name, "") || namedMonsterAsGeneric )
-			{
-				messagePlayerColor(parent->skill[2], MESSAGE_COMBAT, color, Language::get(3187), getMonsterLocalizedName((*targetStats).type).c_str(), getMonsterLocalizedName(summonedStats->type).c_str());
-			}
-			else
-			{
-				messagePlayerColor(parent->skill[2], MESSAGE_COMBAT, color, Language::get(3188), (*targetStats).name, getMonsterLocalizedName(summonedStats->type).c_str());
-			}
-		}
-
-		playSoundEntity(target, 400, 92);
-		spawnExplosion(target->x, target->y, target->z);
-		createParticleDropRising(target, 593, 1.f);
-		serverSpawnMiscParticles(target, PARTICLE_EFFECT_RISING_DROP, 593);
-
-		if ( fellToDeath )
-		{
-			summonedEntity->setObituary(Language::get(3010)); // fell to their death.
-			summonedStats->HP = 0; // kill me instantly
-			summonedStats->killer = KilledBy::BOTTOMLESS_PIT;
-		}
-		else if ( fellInLava )
-		{
-			summonedEntity->setObituary(Language::get(1506)); // goes for a swim in some lava.
-			summonedStats->HP = 0; // kill me instantly
-			summonedStats->killer = KilledBy::LAVA;
-		}
-		else
-		{
-			for ( node_t* node = map.creatures->first; node != nullptr; node = node->next )
-			{
-				Entity* creature = (Entity*)node->element;
-				if ( creature && creature->behavior == &actMonster && creature != target && creature != summonedEntity )
-				{
-					if ( creature->monsterTarget == target->getUID() )
-					{
-						if ( creature->checkEnemy(summonedEntity) )
-						{
-							creature->monsterAcquireAttackTarget(*summonedEntity, MONSTER_STATE_PATH); // re-acquire new target
-						}
-						else
-						{
-							creature->monsterReleaseAttackTarget(); // release if new target is ally.
-						}
-					}
-				}
-			}
-		}
-
-		list_RemoveNode(target->mynode);
-		target = nullptr;
-		return summonedEntity;
-	}
-	else if ( target->behavior == &actPlayer )
-	{
-		if ( target->setEffect(EFF_POLYMORPH, true, effectDuration, true) )
-		{
-			spawnExplosion(target->x, target->y, target->z);
-			playSoundEntity(target, 400, 92);
-			createParticleDropRising(target, 593, 1.f);
-			serverSpawnMiscParticles(target, PARTICLE_EFFECT_RISING_DROP, 593);
-
-			if ( targetStats->playerRace == RACE_HUMAN || (targetStats->playerRace != RACE_HUMAN && targetStats->appearance != 0) )
-			{
-				int roll = (RACE_HUMAN + 1) + local_rng.rand() % 8;
-				if ( target->effectPolymorph == 0 )
-				{
-					target->effectPolymorph = target->getMonsterFromPlayerRace(roll);
-				}
-				else
-				{
-					while ( target->effectPolymorph == target->getMonsterFromPlayerRace(roll) )
-					{
-						roll = (RACE_HUMAN + 1) + local_rng.rand() % 8; // re roll to not polymorph into the same thing
-					}
-					target->effectPolymorph = target->getMonsterFromPlayerRace(roll);
-				}
-			}
-			else if ( (targetStats->playerRace != RACE_HUMAN && targetStats->appearance == 0) )
-			{
-				target->effectPolymorph = 100 + local_rng.rand() % NUMAPPEARANCES;
-			}
-			serverUpdateEntitySkill(target, 50);
-
-			Uint32 color = makeColorRGB(0, 255, 0);
-			Monster race = NOTHING;
-			if ( target->effectPolymorph > NUMMONSTERS )
-			{
-				race = HUMAN;
-			}
-			else
-			{
-				race = static_cast<Monster>(target->effectPolymorph);
-			}
-			messagePlayerColor(target->skill[2], MESSAGE_COMBAT, color, Language::get(3186), getMonsterLocalizedName(race).c_str());
-
-			// change player's type here, don't like this.. will get auto reset in actPlayer() though
-			// otherwise the below aggro check will still assume previous race since actPlayer() hasn't run yet.
-			targetStats->type = race;
-
-			for ( node_t* node = map.creatures->first; node != nullptr; node = node->next )
-			{
-				Entity* creature = (Entity*)node->element;
-				if ( creature && creature->behavior == &actMonster && creature != target )
-				{
-					if ( creature->monsterTarget == target->getUID() )
-					{
-						if ( creature->checkEnemy(target) )
-						{
-							creature->monsterAcquireAttackTarget(*target, MONSTER_STATE_PATH); // re-acquire new target
-						}
-						else
-						{
-							creature->monsterReleaseAttackTarget(); // release if new target is ally.
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			messagePlayer(target->skill[2], MESSAGE_STATUS | MESSAGE_HINT, Language::get(3189));
-		}
-
-	}
-
-	return nullptr;
-}
-
-bool spellEffectTeleportPull(Entity* my, spellElement_t& element, Entity* parent, Entity* target, int resistance)
-{
-	if ( !parent )
-	{
-		return false;
-	}
-	if ( target )
-	{
-		playSoundEntity(target, 173, 128);
-		//int damage = element.damage;
-		//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
-
-		if ( (target->behavior == &actMonster && !target->isInertMimic()) || target->behavior == &actPlayer
-			/*|| target->behavior == &actDoor || target->behavior == &actChest*/ )
-		{
-			Stat* hitstats = target->getStats();
-			if ( hitstats )
-			{
-				if ( !(svFlags & SV_FLAG_FRIENDLYFIRE) )
-				{
-					// test for friendly fire
-					if ( parent && parent->checkFriend(target) )
-					{
-						return false;
-					}
-				}
-			}
-			//playSoundEntity(target, 249, 64);
-
-			if ( parent )
-			{
-				if ( target->behavior == &actPlayer )
-				{
-					if ( MFLAG_DISABLETELEPORT )
-					{
-						// can't teleport here.
-						Uint32 color = makeColorRGB(255, 0, 255);
-						messagePlayerColor(target->skill[2], MESSAGE_STATUS, color, Language::get(2381));
-						if ( parent->behavior == &actPlayer )
-						{
-							messagePlayerColor(parent->skill[2], MESSAGE_HINT, color, Language::get(3452));
-						}
-						return false;
-					}
-				}
-				if ( target->behavior == &actMonster && target->isBossMonster() )
-				{
-					if ( parent->behavior == &actPlayer )
-					{
-						Uint32 color = makeColorRGB(255, 0, 0);
-						if ( hitstats )
-						{
-							messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(2905), Language::get(2906), MSG_COMBAT);
-						}
-					}
-					return false;
-				}
-
-				// try find a teleport location in front of the caster.
-				int tx = static_cast<int>(std::floor(parent->x + 32 * cos(parent->yaw))) >> 4;
-				int ty = static_cast<int>(std::floor(parent->y + 32 * sin(parent->yaw))) >> 4;
-				int dist = 2;
-				bool foundLocation = false;
-				int numlocations = 0;
-				std::vector<std::pair<int, int>> goodspots;
-				std::vector<std::pair<int, int>> spotsWithLineOfSight;
-				if ( !checkObstacle((tx << 4) + 8, (ty << 4) + 8, target, NULL) ) // try find directly infront of caster.
-				{
-					Entity* ohitentity = hit.entity;
-					real_t ox = target->x;
-					real_t oy = target->y;
-					target->x = (tx << 4) + 8;
-					target->y = (ty << 4) + 8;
-					TileEntityList.updateEntity(*target); // important - lineTrace needs the TileEntityListUpdated.
-
-					// pretend the target is in the supposed spawn locations and try linetrace from each position.
-					real_t tangent = atan2(target->y - parent->y, target->x - parent->x);
-					lineTraceTarget(parent, parent->x, parent->y, tangent, 92, 0, true, target);
-					if ( hit.entity == target )
-					{
-						foundLocation = true;
-					}
-					
-					// reset the coordinates we messed with
-					target->x = ox;
-					target->y = oy;
-					TileEntityList.updateEntity(*target); // important - lineTrace needs the TileEntityListUpdated.
-					hit.entity = ohitentity;
-				}
-				if ( !foundLocation )
-				{
-					// otherwise, let's search in an area
-					for ( int iy = std::max(1, ty - dist); iy < std::min(ty + dist, static_cast<int>(map.height)); ++iy )
-					{
-						for ( int ix = std::max(1, tx - dist); ix < std::min(tx + dist, static_cast<int>(map.width)); ++ix )
-						{
-							if ( !checkObstacle((ix << 4) + 8, (iy << 4) + 8, target, NULL) )
-							{
-								Entity* ohitentity = hit.entity;
-								real_t ox = target->x;
-								real_t oy = target->y;
-								target->x = (ix << 4) + 8;
-								target->y = (iy << 4) + 8;
-								TileEntityList.updateEntity(*target); // important - lineTrace needs the TileEntityListUpdated.
-
-								// pretend the target is in the supposed spawn locations and try linetrace from each position.
-								real_t tangent = atan2(target->y - parent->y, target->x - parent->x);
-								lineTraceTarget(parent, parent->x, parent->y, tangent, 92, 0, false, target);
-								if ( hit.entity == target )
-								{
-									spotsWithLineOfSight.push_back(std::make_pair(ix, iy));
-								}
-								goodspots.push_back(std::make_pair(ix, iy));
-								numlocations++;
-								// reset the coordinates we messed with
-								target->x = ox;
-								target->y = oy;
-								TileEntityList.updateEntity(*target); // important - lineTrace needs the TileEntityListUpdated.
-								hit.entity = ohitentity;
-							}
-						}
-					}
-					if ( numlocations == 0 )
-					{
-						if ( parent->behavior == &actPlayer )
-						{
-							// no room to teleport!
-							messagePlayer(parent->skill[2], MESSAGE_COMBAT, Language::get(3453));
-						}
-						return false;
-					}
-
-					if ( !spotsWithLineOfSight.empty() )
-					{
-						std::pair<int, int> tmpPair = spotsWithLineOfSight[local_rng.rand() % spotsWithLineOfSight.size()];
-						tx = tmpPair.first;
-						ty = tmpPair.second;
-					}
-					else if ( !goodspots.empty() )
-					{
-						std::pair<int, int> tmpPair = goodspots[local_rng.rand() % goodspots.size()];
-						tx = tmpPair.first;
-						ty = tmpPair.second;
-					}
-					else
-					{
-						if ( parent->behavior == &actPlayer )
-						{
-							// no room to teleport!
-							messagePlayer(parent->skill[2], MESSAGE_COMBAT, Language::get(3453));
-						}
-						return false;
-					}
-				}
-
-				// this timer is the entity spawn location.
-				Entity* locationTimer = createParticleTimer(parent, 40, 593); 
-				locationTimer->x = tx * 16.0 + 8;
-				locationTimer->y = ty * 16.0 + 8;
-				locationTimer->z = 0;
-				locationTimer->particleTimerCountdownAction = PARTICLE_EFFECT_TELEPORT_PULL_TARGET_LOCATION;
-				locationTimer->particleTimerCountdownSprite = 593;
-				locationTimer->particleTimerTarget = static_cast<Sint32>(target->getUID()); // get the target to teleport around.
-				locationTimer->particleTimerEndAction = PARTICLE_EFFECT_TELEPORT_PULL; // teleport behavior of timer.
-				locationTimer->particleTimerEndSprite = 593; // sprite to use for end of timer function.
-				locationTimer->flags[PASSABLE] = false; // so this location is reserved for teleporting the entity.
-				locationTimer->sizex = 4;
-				locationTimer->sizey = 4;
-				if ( !locationTimer->myTileListNode )
-				{
-					locationTimer->setUID(-2); // to avoid being excluded by TileEntityList
-					TileEntityList.addEntity(*locationTimer);
-					locationTimer->setUID(-3);
-				}
-
-				// set a coundown to spawn particles on the monster.
-				Entity* spellTimer = createParticleTimer(target, 40, 593);
-				spellTimer->particleTimerCountdownAction = PARTICLE_TIMER_ACTION_SHOOT_PARTICLES;
-				spellTimer->particleTimerCountdownSprite = 593;
-				spellTimer->particleTimerTarget = static_cast<Sint32>(parent->getUID()); // get the target to teleport around.
-
-
-				if ( multiplayer == SERVER )
-				{
-					serverSpawnMiscParticles(target, PARTICLE_EFFECT_TELEPORT_PULL, 593);
-					serverSpawnMiscParticlesAtLocation(tx, ty, 0, PARTICLE_EFFECT_TELEPORT_PULL_TARGET_LOCATION, 593);
-				}
-
-				Uint32 color = makeColorRGB(0, 255, 0);
-				if ( parent->behavior == &actPlayer )
-				{
-					// play a sound for the player to confirm the hit.
-					playSoundPlayer(parent->skill[2], 251, 128);
-				}
-
-				// update enemy bar for attacker
-				/*if ( hitstats )
-				{
-					if ( !strcmp(hitstats->name, "") )
-					{
-						updateEnemyBar(parent, target, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP);
-					}
-					else
-					{
-						updateEnemyBar(parent, target, hitstats->name, hitstats->HP, hitstats->MAXHP);
-					}
-				}*/
-			}
-			return true;
-		}
-		if ( my )
-		{
-			spawnMagicEffectParticles(target->x, target->y, target->z, my->sprite);
-		}
-	}
-	else if ( my )
-	{
-		spawnMagicEffectParticles(my->x, my->y, my->z, my->sprite);
-	}
-	return false;
-}
-
-void spellEffectShadowTag(Entity& my, spellElement_t& element, Entity* parent, int resistance)
-{
-	if ( hit.entity )
-	{
-		//int damage = element.damage;
-		//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
-
-		if ( (hit.entity->behavior == &actMonster && !hit.entity->isInertMimic()) || hit.entity->behavior == &actPlayer )
-		{
-			playSoundEntity(&my, 174, 128);
-			Stat* hitstats = hit.entity->getStats();
-			if ( !hitstats )
-			{
-				return;
-			}
-
-			if ( parent )
-			{
-				bool sameAsPrevious = false;
-				if ( parent->creatureShadowTaggedThisUid != 0 )
-				{
-					Entity* oldTarget = nullptr;
-					if ( oldTarget = uidToEntity(parent->creatureShadowTaggedThisUid) )
-					{
-						if ( oldTarget != hit.entity )
-						{
-							oldTarget->setEffect(EFF_SHADOW_TAGGED, false, 0, true);
-						}
-						else
-						{
-							sameAsPrevious = true;
-						}
-					}
-				}
-				if ( parent->checkFriend(hit.entity) )
-				{
-					hit.entity->setEffect(EFF_SHADOW_TAGGED, true, 60 * TICKS_PER_SECOND, true);
-				}
-				else
-				{
-					hit.entity->setEffect(EFF_SHADOW_TAGGED, true, 10 * TICKS_PER_SECOND, true);
-				}
-				parent->creatureShadowTaggedThisUid = hit.entity->getUID();
-				serverUpdateEntitySkill(parent, 54);
-				if ( !sameAsPrevious )
-				{
-					createParticleShadowTag(hit.entity, parent->getUID(), 60 * TICKS_PER_SECOND);
-					serverSpawnMiscParticles(hit.entity, PARTICLE_EFFECT_SHADOW_TAG, 870, parent->getUID());
-				}
-			}
-
-			// hit messages
-			if ( parent )
-			{
-				Uint32 color = makeColorRGB(0, 255, 0);
-				if ( parent->behavior == &actPlayer )
-				{
-					messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3463), Language::get(3464), MSG_COMBAT);
-				}
-			}
-
-			// update enemy bar for attacker
-			/*if ( !strcmp(hitstats->name, "") )
-			{
-				updateEnemyBar(parent, hit.entity, getMonsterLocalizedName(hitstats->type).c_str(), hitstats->HP, hitstats->MAXHP);
-			}
-			else
-			{
-				updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP);
-			}*/
-
-			Uint32 color = makeColorRGB(255, 0, 0);
-			int player = -1;
-			if ( hit.entity->behavior == &actPlayer )
-			{
-				player = hit.entity->skill[2];
-				if ( player >= 0 )
-				{
-					messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(3465));
-				}
-			}
-		}
-		spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my.sprite);
-	}
-	else
-	{
-		spawnMagicEffectParticles(my.x, my.y, my.z, my.sprite);
-	}
-}
-
-bool spellEffectDemonIllusion(Entity& my, spellElement_t& element, Entity* parent, Entity* target, int resistance)
-{
-	if ( target )
-	{
-		//int damage = element.damage;
-		//damage += ((element->mana - element->base_mana) / static_cast<double>(element->overload_multiplier)) * element->damage;
-
-		if ( (target->behavior == &actMonster && !target->isInertMimic()) || target->behavior == &actPlayer )
-		{
-			Stat* hitstats = target->getStats();
-			if ( !hitstats )
-			{
-				return false;
-			}
-
-			if ( hitstats->type == INCUBUS || hitstats->type == SUCCUBUS 
-				|| hitstats->type == AUTOMATON || hitstats->type == DEVIL || hitstats->type == DEMON || hitstats->type == CREATURE_IMP
-				|| hitstats->type == SHADOW
-				|| hitstats->type == MIMIC
-				|| (hitstats->type == INCUBUS && !strncmp(hitstats->name, "inner demon", strlen("inner demon"))) )
-			{
-				if ( parent && parent->behavior == &actPlayer )
-				{
-					// unable to taunt!
-					Uint32 color = makeColorRGB(255, 255, 255);
-					messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3472), Language::get(3473), MSG_COMBAT);
-				}
-				return false;
-			}
-			else if ( hitstats->monsterDemonHasBeenExorcised != 0 
-				&& target->behavior != &actPlayer )
-			{
-				if ( parent && parent->behavior == &actPlayer )
-				{
-					// already exorcised!
-					Uint32 color = makeColorRGB(255, 255, 255);
-					messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3735), Language::get(3736), MSG_COMBAT);
-				}
-				return false;
-			}
-
-			if ( parent )
-			{
-				// try find a summon location around the entity.
-				int tx = static_cast<int>(std::floor(target->x)) >> 4;
-				int ty = static_cast<int>(std::floor(target->y)) >> 4;
-				int dist = 3;
-				int numlocations = 0;
-				std::vector<std::pair<int, int>> goodspots;
-				for ( int iy = std::max(1, ty - dist); iy < std::min(ty + dist, static_cast<int>(map.height)); ++iy )
-				{
-					for ( int ix = std::max(1, tx - dist); ix < std::min(tx + dist, static_cast<int>(map.width)); ++ix )
-					{
-						if ( !checkObstacle((ix << 4) + 8, (iy << 4) + 8, target, NULL) )
-						{
-							Entity* ohitentity = hit.entity;
-							real_t ox = parent->x;
-							real_t oy = parent->y;
-							parent->x = (ix << 4) + 8;
-							parent->y = (iy << 4) + 8;
-							TileEntityList.updateEntity(*parent); // important - lineTrace needs the TileEntityListUpdated.
-
-							// pretend the parent is in the supposed spawn locations and try linetrace from each position.
-							real_t tangent = atan2(parent->y - target->y, parent->x - target->x);
-							lineTraceTarget(target, target->x, target->y, tangent, 64, 0, false, parent);
-							if ( hit.entity == parent )
-							{
-								goodspots.push_back(std::make_pair(ix, iy));
-								numlocations++;
-							}
-							// reset the coordinates we messed with
-							parent->x = ox;
-							parent->y = oy;
-							TileEntityList.updateEntity(*parent); // important - lineTrace needs the TileEntityListUpdated.
-							hit.entity = ohitentity;
-						}
-					}
-				}
-				if ( numlocations == 0 )
-				{
-					if ( parent->behavior == &actPlayer )
-					{
-						// no room to spawn!
-						messagePlayer(parent->skill[2], MESSAGE_MISC, Language::get(3471));
-					}
-					return false;
-				}
-				std::pair<int, int> tmpPair = goodspots[local_rng.rand() % goodspots.size()];
-				tx = tmpPair.first;
-				ty = tmpPair.second;
-
-				Entity* monster = summonMonster(INCUBUS, tx * 16.0 + 8, ty * 16.0 + 8, true);
-				if ( monster )
-				{
-					spawnExplosion(monster->x, monster->y, -1);
-					playSoundEntity(monster, 171, 128);
-					//playSoundEntity(&my, 178, 128);
-					createParticleErupt(monster, 983);
-					serverSpawnMiscParticles(monster, PARTICLE_EFFECT_ERUPT, 983);
-
-					monster->parent = parent->getUID();
-					monster->monsterIllusionTauntingThisUid = static_cast<Sint32>(target->getUID());
-					switch ( target->getRace() )
-					{
-						case LICH:
-						case LICH_FIRE:
-						case LICH_ICE:
-						case MINOTAUR:
-							break;
-						default:
-							target->monsterAcquireAttackTarget(*monster, MONSTER_STATE_PATH);
-							break;
-					}
-					monster->lookAtEntity(*target);
-					Stat* monsterStats = monster->getStats();
-					if ( monsterStats )
-					{
-						monsterStats->leader_uid = 0;
-						strcpy(monsterStats->name, "inner demon");
-						monster->setEffect(EFF_STUNNED, true, 20, false);
-						monster->flags[USERFLAG2] = true;
-						serverUpdateEntityFlag(monster, USERFLAG2);
-						if ( monsterChangesColorWhenAlly(monsterStats) )
-						{
-							int bodypart = 0;
-							for ( node_t* node = (monster)->children.first; node != nullptr; node = node->next )
-							{
-								if ( bodypart >= LIMB_HUMANOID_TORSO )
-								{
-									Entity* tmp = (Entity*)node->element;
-									if ( tmp )
-									{
-										tmp->flags[USERFLAG2] = true;
-										serverUpdateEntityFlag(tmp, USERFLAG2);
-									}
-								}
-								++bodypart;
-							}
-						}
-					}
-					Stat* parentStats = parent->getStats();
-					if ( parentStats )
-					{
-						if ( parent->behavior == &actPlayer )
-						{
-							Uint32 color = makeColorRGB(255, 255, 0);
-							messagePlayerColor(parent->skill[2], MESSAGE_STATUS, color, Language::get(621));
-						}
-						parent->modHP(-(parentStats->MAXHP / 10));
-						if ( parentStats->sex == MALE )
-						{
-							parent->setObituary(Language::get(1528));
-							parentStats->killer = KilledBy::FAILED_INVOCATION;
-						}
-						else
-						{
-							parent->setObituary(Language::get(1529));
-							parentStats->killer = KilledBy::FAILED_INVOCATION;
-						}
-					}
-
-					hitstats->monsterDemonHasBeenExorcised++;
-
-					// hit messages
-					Uint32 color = makeColorRGB(0, 255, 0);
-					if ( parent->behavior == &actPlayer )
-					{
-						messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3469), Language::get(3470), MSG_COMBAT);
-					}
-				}
-			}
-
-			Uint32 color = makeColorRGB(255, 0, 0);
-			int player = -1;
-			if ( target->behavior == &actPlayer )
-			{
-				player = target->skill[2];
-				if ( player >= 0 )
-				{
-					messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(3468));
-					if ( hitstats->monsterDemonHasBeenExorcised == 3 )
-					{
-						Uint32 color = makeColorRGB(0, 255, 0);
-						messagePlayerColor(player, MESSAGE_COMBAT, color, Language::get(3737));
-					}
-				}
-			}
-			spawnMagicEffectParticles(target->x, target->y, target->z, my.sprite);
-			return true;
-		}
-		spawnMagicEffectParticles(target->x, target->y, target->z, my.sprite);
-	}
-	else
-	{
-		spawnMagicEffectParticles(my.x, my.y, my.z, my.sprite);
-	}
-	return false;
+	node_t* node = NULL;
+	spellElement_t* element = NULL;
+
+	spellElementConstructor(&spellElement_unintelligible);
+	spellElement_unintelligible.mana = 0;
+	spellElement_unintelligible.base_mana = 0;
+	spellElement_unintelligible.overload_multiplier = 0; //NOTE: Might crash due to divide by zero?
+	spellElement_unintelligible.damage = 0;
+	spellElement_unintelligible.duration = 0;
+	spellElement_unintelligible.can_be_learned = false;
+	strcpy(spellElement_unintelligible.element_internal_name, "spell_element_unintelligible");
+
+	spellElementConstructor(&spellElement_missile);
+	spellElement_missile.mana = 1;
+	spellElement_missile.base_mana = 1;
+	spellElement_missile.overload_multiplier = 1;
+	spellElement_missile.damage = 0;
+	spellElement_missile.duration = 75; //1.25 seconds.
+	//spellElement_missile.name = "Missile";
+	strcpy(spellElement_missile.element_internal_name, "spell_element_missile");
+
+	spellElementConstructor(&spellElement_force);
+	spellElement_force.mana = 4;
+	spellElement_force.base_mana = 4;
+	spellElement_force.overload_multiplier = 1;
+	spellElement_force.damage = 15;
+	spellElement_force.duration = 0;
+	strcpy(spellElement_force.element_internal_name, "spell_element_forcebolt");
+
+	spellElementConstructor(&spellElement_fire);
+	spellElement_fire.mana = 6;
+	spellElement_fire.base_mana = 6;
+	spellElement_fire.overload_multiplier = 1;
+	spellElement_fire.damage = 25;
+	spellElement_fire.duration = 0;
+	strcpy(spellElement_fire.element_internal_name, "spell_element_fireball");
+
+	spellElementConstructor(&spellElement_lightning);
+	spellElement_lightning.mana = 5;
+	spellElement_lightning.base_mana = 5;
+	spellElement_lightning.overload_multiplier = 1;
+	spellElement_lightning.damage = 25;
+	spellElement_lightning.duration = 75;
+	strcpy(spellElement_lightning.element_internal_name, "spell_element_lightning");
+
+	spellElementConstructor(&spellElement_light);
+	spellElement_light.mana = 1;
+	spellElement_light.base_mana = 1;
+	spellElement_light.overload_multiplier = 1;
+	spellElement_light.damage = 0;
+	spellElement_light.duration = 750; //500 a better value? //NOTE: 750 is original value.
+	strcpy(spellElement_light.element_internal_name, "spell_element_light");
+
+	spellElementConstructor(&spellElement_dig);
+	spellElement_dig.mana = 20;
+	spellElement_dig.base_mana = 20;
+	spellElement_dig.overload_multiplier = 1;
+	spellElement_dig.damage = 0;
+	spellElement_dig.duration = 0;
+	strcpy(spellElement_dig.element_internal_name, "spell_element_dig");
+
+	spellElementConstructor(&spellElement_invisible);
+	spellElement_invisible.mana = 2;
+	spellElement_invisible.base_mana = 2;
+	spellElement_invisible.overload_multiplier = 1;
+	spellElement_invisible.damage = 0;
+	spellElement_invisible.duration = 100;
+	strcpy(spellElement_invisible.element_internal_name, "spell_element_invisibility");
+
+	spellElementConstructor(&spellElement_identify);
+	spellElement_identify.mana = 10;
+	spellElement_identify.base_mana = 10;
+	spellElement_identify.overload_multiplier = 0; //NOTE: Might segfault due to divide by zero?
+	spellElement_identify.damage = 0;
+	spellElement_identify.duration = 0;
+	strcpy(spellElement_identify.element_internal_name, "spell_element_identify");
+
+	spellElementConstructor(&spellElement_magicmapping);
+	spellElement_magicmapping.mana = 40;
+	spellElement_magicmapping.base_mana = 40;
+	spellElement_magicmapping.overload_multiplier = 0; //NOTE: Might segfault due to divide by zero?
+	spellElement_magicmapping.damage = 0;
+	spellElement_magicmapping.duration = 0;
+	strcpy(spellElement_magicmapping.element_internal_name, "spell_element_magicmapping");
+
+	spellElementConstructor(&spellElement_heal);
+	spellElement_heal.mana = 1;
+	spellElement_heal.base_mana = 1;
+	spellElement_heal.overload_multiplier = 1;
+	spellElement_heal.damage = 1;
+	spellElement_heal.duration = 0;
+	strcpy(spellElement_heal.element_internal_name, "spell_element_healing");
+
+	spellElementConstructor(&spellElement_confuse);
+	spellElement_confuse.mana = 4;
+	spellElement_confuse.base_mana = 4;
+	spellElement_confuse.overload_multiplier = 1;
+	spellElement_confuse.damage = 0;
+	spellElement_confuse.duration = TICKS_PER_SECOND * SPELLELEMENT_CONFUSE_BASE_DURATION; //TODO: Decide on something.
+	strcpy(spellElement_confuse.element_internal_name, "spell_element_confuse");
+
+	spellElementConstructor(&spellElement_cure_ailment);
+	spellElement_cure_ailment.mana = 10;
+	spellElement_cure_ailment.base_mana = 10;
+	spellElement_cure_ailment.overload_multiplier = 0;
+	spellElement_cure_ailment.damage = 0;
+	spellElement_cure_ailment.duration = 0;
+	strcpy(spellElement_cure_ailment.element_internal_name, "spell_element_cureailment");
+
+	spellElementConstructor(&spellElement_locking);
+	spellElement_locking.mana = 10;
+	spellElement_locking.base_mana = 10;
+	spellElement_locking.overload_multiplier = 0;
+	spellElement_locking.damage = 0;
+	spellElement_locking.duration = 0;
+	strcpy(spellElement_locking.element_internal_name, "spell_element_locking");
+
+	spellElementConstructor(&spellElement_opening);
+	spellElement_opening.mana = 5;
+	spellElement_opening.base_mana = 5;
+	spellElement_opening.overload_multiplier = 0;
+	spellElement_opening.damage = 0;
+	spellElement_opening.duration = 0;
+	strcpy(spellElement_opening.element_internal_name, "spell_element_opening");
+
+	spellElementConstructor(&spellElement_sleep);
+	spellElement_sleep.mana = 3;
+	spellElement_sleep.base_mana = 3;
+	spellElement_sleep.overload_multiplier = 0;
+	spellElement_sleep.damage = 0;
+	spellElement_sleep.duration = 0;
+	strcpy(spellElement_sleep.element_internal_name, "spell_element_sleep");
+
+	spellElementConstructor(&spellElement_cold);
+	spellElement_cold.mana = 5;
+	spellElement_cold.base_mana = 5;
+	spellElement_cold.overload_multiplier = 1;
+	spellElement_cold.damage = 20;
+	spellElement_cold.duration = 180;
+	strcpy(spellElement_cold.element_internal_name, "spell_element_cold");
+
+	spellElementConstructor(&spellElement_slow);
+	spellElement_slow.mana = 3;
+	spellElement_slow.base_mana = 3;
+	spellElement_slow.overload_multiplier = 1;
+	spellElement_slow.damage = 0;
+	spellElement_slow.duration = 180;
+	strcpy(spellElement_slow.element_internal_name, "spell_element_slow");
+
+	spellElementConstructor(&spellElement_levitation);
+	spellElement_levitation.mana = 1;
+	spellElement_levitation.base_mana = 1;
+	spellElement_levitation.overload_multiplier = 1;
+	spellElement_levitation.damage = 0;
+	spellElement_levitation.duration = 30;
+	strcpy(spellElement_levitation.element_internal_name, "spell_element_levitation");
+
+	spellElementConstructor(&spellElement_teleportation);
+	spellElement_teleportation.mana = 20;
+	spellElement_teleportation.base_mana = 20;
+	spellElement_teleportation.overload_multiplier = 0;
+	spellElement_teleportation.damage = 0;
+	spellElement_teleportation.duration = 0;
+	strcpy(spellElement_teleportation.element_internal_name, "spell_element_teleportation");
+
+	spellElementConstructor(&spellElement_selfPolymorph);
+	spellElement_selfPolymorph.mana = 40;
+	spellElement_selfPolymorph.base_mana = 40;
+	spellElement_selfPolymorph.overload_multiplier = 0;
+	spellElement_selfPolymorph.damage = 0;
+	spellElement_selfPolymorph.duration = 0;
+	strcpy(spellElement_selfPolymorph.element_internal_name, "spell_element_self_polymorph");
+
+	spellElementConstructor(&spellElement_magicmissile);
+	spellElement_magicmissile.mana = 6;
+	spellElement_magicmissile.base_mana = 6;
+	spellElement_magicmissile.overload_multiplier = 1;
+	spellElement_magicmissile.damage = 30;
+	spellElement_magicmissile.duration = 0;
+	strcpy(spellElement_magicmissile.element_internal_name, "spell_element_magicmissile");
+
+	spellElementConstructor(&spellElement_annihilateundead);
+	spellElement_annihilateundead.mana = 20;
+	spellElement_annihilateundead.base_mana = 20;
+	spellElement_annihilateundead.overload_multiplier = 0;
+	spellElement_annihilateundead.damage = 175;
+	spellElement_annihilateundead.duration = 0;
+	strcpy(spellElement_annihilateundead.element_internal_name, "spell_element_annihilateundead");
+
+	spellElementConstructor(&spellElement_annihilatemonstrosities);
+	spellElement_annihilatemonstrosities.mana = 20;
+	spellElement_annihilatemonstrosities.base_mana = 20;
+	spellElement_annihilatemonstrosities.overload_multiplier = 0;
+	spellElement_annihilatemonstrosities.damage = 175;
+	spellElement_annihilatemonstrosities.duration = 0;
+	strcpy(spellElement_annihilatemonstrosities.element_internal_name, "spell_element_annihilatemonstrosities");
+
+	spellElementConstructor(&spellElement_annihilatehellspawn);
+	spellElement_annihilatehellspawn.mana = 20;
+	spellElement_annihilatehellspawn.base_mana = 20;
+	spellElement_annihilatehellspawn.overload_multiplier = 0;
+	spellElement_annihilatehellspawn.damage = 175;
+	spellElement_annihilatehellspawn.duration = 0;
+	strcpy(spellElement_annihilatehellspawn.element_internal_name, "spell_element_annihilatehellspawn");
+
+	spellElementConstructor(&spellElement_removecurse);
+	spellElement_removecurse.mana = 20;
+	spellElement_removecurse.base_mana = 20;
+	spellElement_removecurse.overload_multiplier = 0;
+	spellElement_removecurse.damage = 0;
+	spellElement_removecurse.duration = 0;
+	strcpy(spellElement_removecurse.element_internal_name, "spell_element_removecurse");
+
+	spellElementConstructor(&spellElement_summon);
+	spellElement_summon.mana = 12; //fskin note: decreased
+	spellElement_summon.base_mana = 12;
+	spellElement_summon.overload_multiplier = 1;
+	spellElement_summon.damage = 0;
+	spellElement_summon.duration = 0;
+	strcpy(spellElement_summon.element_internal_name, "spell_element_summon");
+
+	spellElementConstructor(&spellElement_stoneblood);
+	spellElement_stoneblood.mana = 20;
+	spellElement_stoneblood.base_mana = 20;
+	spellElement_stoneblood.overload_multiplier = 1;
+	spellElement_stoneblood.damage = 0;
+	spellElement_stoneblood.duration = TICKS_PER_SECOND * SPELLELEMENT_STONEBLOOD_BASE_DURATION;
+	strcpy(spellElement_stoneblood.element_internal_name, "spell_element_stoneblood");
+
+	spellElementConstructor(&spellElement_bleed);
+	spellElement_bleed.mana = 10;
+	spellElement_bleed.base_mana = 10;
+	spellElement_bleed.overload_multiplier = 1;
+	spellElement_bleed.damage = 30;
+	spellElement_bleed.duration = TICKS_PER_SECOND * SPELLELEMENT_BLEED_BASE_DURATION; //TODO: Decide on something.;
+	strcpy(spellElement_bleed.element_internal_name, "spell_element_bleed");
+
+	spellElementConstructor(&spellElement_missile_trio);
+	spellElement_missile_trio.mana = 1;
+	spellElement_missile_trio.base_mana = 1;
+	spellElement_missile_trio.overload_multiplier = 1;
+	spellElement_missile_trio.damage = 0;
+	spellElement_missile_trio.duration = 25; //1 second.
+	strcpy(spellElement_missile_trio.element_internal_name, "spell_element_trio");
+
+	spellElementConstructor(&spellElement_dominate);
+	spellElement_dominate.mana = 20;
+	spellElement_dominate.base_mana = 20;
+	spellElement_dominate.overload_multiplier = 1;
+	spellElement_dominate.damage = 0;
+	spellElement_dominate.duration = 0;
+	strcpy(spellElement_dominate.element_internal_name, "spell_element_dominate");
+
+	spellElementConstructor(&spellElement_reflectMagic);
+	spellElement_reflectMagic.mana = 10;
+	spellElement_reflectMagic.base_mana = 10;
+	spellElement_reflectMagic.overload_multiplier = 1;
+	spellElement_reflectMagic.damage = 0;
+	spellElement_reflectMagic.duration = 3000;
+	strcpy(spellElement_reflectMagic.element_internal_name, "spell_element_reflect_magic");
+
+	spellElementConstructor(&spellElement_acidSpray);
+	spellElement_acidSpray.mana = 10;
+	spellElement_acidSpray.base_mana = 10;
+	spellElement_acidSpray.overload_multiplier = 1;
+	spellElement_acidSpray.damage = 10;
+	spellElement_acidSpray.duration = TICKS_PER_SECOND * SPELLELEMENT_ACIDSPRAY_BASE_DURATION; //TODO: Decide on something.;
+	strcpy(spellElement_acidSpray.element_internal_name, "spell_element_acid_spray");
+
+	spellElementConstructor(&spellElement_stealWeapon);
+	spellElement_stealWeapon.mana = 50;
+	spellElement_stealWeapon.base_mana = 50;
+	spellElement_stealWeapon.overload_multiplier = 1;
+	spellElement_stealWeapon.damage = 0;
+	spellElement_stealWeapon.duration = 0;
+	strcpy(spellElement_stealWeapon.element_internal_name, "spell_element_steal_weapon");
+
+	spellElementConstructor(&spellElement_drainSoul);
+	spellElement_drainSoul.mana = 17;
+	spellElement_drainSoul.base_mana = 17;
+	spellElement_drainSoul.overload_multiplier = 1;
+	spellElement_drainSoul.damage = 18;
+	spellElement_drainSoul.duration = 0;
+	strcpy(spellElement_drainSoul.element_internal_name, "spell_element_drain_soul");
+
+	spellElementConstructor(&spellElement_vampiricAura);
+	spellElement_vampiricAura.mana = 5;
+	spellElement_vampiricAura.base_mana = 5;
+	spellElement_vampiricAura.overload_multiplier = 1;
+	spellElement_vampiricAura.damage = 0;
+	spellElement_vampiricAura.duration = 85; //TODO: Decide on something.
+	strcpy(spellElement_vampiricAura.element_internal_name, "spell_element_vampiric_aura");
+
+	spellElementConstructor(&spellElement_amplifyMagic);
+	spellElement_amplifyMagic.mana = 7;
+	spellElement_amplifyMagic.base_mana = 7;
+	spellElement_amplifyMagic.overload_multiplier = 1;
+	spellElement_amplifyMagic.damage = 0;
+	spellElement_amplifyMagic.duration = 85; //TODO: Decide on something.
+	strcpy(spellElement_amplifyMagic.element_internal_name, "spell_element_amplify_magic");
+
+	spellElementConstructor(&spellElement_charmMonster);
+	spellElement_charmMonster.mana = 49;
+	spellElement_charmMonster.base_mana = 49;
+	spellElement_charmMonster.overload_multiplier = 1;
+	spellElement_charmMonster.damage = 0;
+	spellElement_charmMonster.duration = 300;
+	strcpy(spellElement_charmMonster.element_internal_name, "spell_element_charm");
+
+	spellElementConstructor(&spellElement_shapeshift);
+	spellElement_shapeshift.mana = 1;
+	spellElement_shapeshift.base_mana = 1;
+	spellElement_shapeshift.overload_multiplier = 1;
+	spellElement_shapeshift.damage = 0;
+	spellElement_shapeshift.duration = 0;
+	strcpy(spellElement_shapeshift.element_internal_name, "spell_element_shapeshift");
+
+	spellElementConstructor(&spellElement_sprayWeb);
+	spellElement_sprayWeb.mana = 7;
+	spellElement_sprayWeb.base_mana = 7;
+	spellElement_sprayWeb.overload_multiplier = 1;
+	spellElement_sprayWeb.damage = 0;
+	spellElement_sprayWeb.duration = 0;
+	strcpy(spellElement_sprayWeb.element_internal_name, "spell_element_spray_web");
+
+	spellElementConstructor(&spellElement_poison);
+	spellElement_poison.mana = 4;
+	spellElement_poison.base_mana = 4;
+	spellElement_poison.overload_multiplier = 1;
+	spellElement_poison.damage = 10;
+	spellElement_poison.duration = 0;
+	strcpy(spellElement_poison.element_internal_name, "spell_element_poison");
+
+	spellElementConstructor(&spellElement_speed);
+	spellElement_speed.mana = 11;
+	spellElement_speed.base_mana = 11;
+	spellElement_speed.overload_multiplier = 1;
+	spellElement_speed.damage = 0;
+	spellElement_speed.duration = 30 * TICKS_PER_SECOND;
+	strcpy(spellElement_speed.element_internal_name, "spell_element_speed");
+
+	spellElementConstructor(&spellElement_fear);
+	spellElement_fear.mana = 28;
+	spellElement_fear.base_mana = 28;
+	spellElement_fear.overload_multiplier = 1;
+	spellElement_fear.damage = 0;
+	spellElement_fear.duration = 0;
+	strcpy(spellElement_fear.element_internal_name, "spell_element_fear");
+
+	spellElementConstructor(&spellElement_strike);
+	spellElement_strike.mana = 23;
+	spellElement_strike.base_mana = 23;
+	spellElement_strike.overload_multiplier = 1;
+	spellElement_strike.damage = 1;
+	spellElement_strike.duration = 0;
+	strcpy(spellElement_strike.element_internal_name, "spell_element_strike");
+
+	spellElementConstructor(&spellElement_weakness);
+	spellElement_weakness.mana = 1;
+	spellElement_weakness.base_mana = 1;
+	spellElement_weakness.overload_multiplier = 1;
+	spellElement_weakness.damage = 0;
+	spellElement_weakness.duration = 0;
+	strcpy(spellElement_weakness.element_internal_name, "spell_element_weakness");
+
+	spellElementConstructor(&spellElement_detectFood);
+	spellElement_detectFood.mana = 14;
+	spellElement_detectFood.base_mana = 14;
+	spellElement_detectFood.overload_multiplier = 0; //NOTE: Might segfault due to divide by zero?
+	spellElement_detectFood.damage = 0;
+	spellElement_detectFood.duration = 0;
+	strcpy(spellElement_detectFood.element_internal_name, "spell_element_detect_food");
+
+	spellElementConstructor(&spellElement_trollsBlood);
+	spellElement_trollsBlood.mana = 25;
+	spellElement_trollsBlood.base_mana = 25;
+	spellElement_trollsBlood.overload_multiplier = 0; //NOTE: Might segfault due to divide by zero?
+	spellElement_trollsBlood.damage = 0;
+	spellElement_trollsBlood.duration = 80 * TICKS_PER_SECOND;
+	strcpy(spellElement_trollsBlood.element_internal_name, "spell_element_trolls_blood");
+
+	spellElementConstructor(&spellElement_flutter);
+	spellElement_flutter.mana = 10;
+	spellElement_flutter.base_mana = 10;
+	spellElement_flutter.overload_multiplier = 1;
+	spellElement_flutter.damage = 0;
+	spellElement_flutter.duration = 6 * TICKS_PER_SECOND;
+	strcpy(spellElement_flutter.element_internal_name, "spell_element_flutter");
+
+	spellElementConstructor(&spellElement_dash);
+	spellElement_dash.mana = 5;
+	spellElement_dash.base_mana = 5;
+	spellElement_dash.overload_multiplier = 1;
+	spellElement_dash.damage = 0;
+	spellElement_dash.duration = 1 * TICKS_PER_SECOND;
+	strcpy(spellElement_dash.element_internal_name, "spell_element_dash");
+
+	spellElementConstructor(&spellElement_salvageItem);
+	spellElement_salvageItem.mana = 6;
+	spellElement_salvageItem.base_mana = 6;
+	spellElement_salvageItem.overload_multiplier = 0; //NOTE: Might segfault due to divide by zero?
+	spellElement_salvageItem.damage = 0;
+	spellElement_salvageItem.duration = 0;
+	strcpy(spellElement_salvageItem.element_internal_name, "spell_element_salvage");
+
+	spellElementConstructor(&spellElement_shadowTag);
+	spellElement_shadowTag.mana = 4;
+	spellElement_shadowTag.base_mana = 4;
+	spellElement_shadowTag.overload_multiplier = 1;
+	spellElement_shadowTag.damage = 0;
+	spellElement_shadowTag.duration = 0;
+	strcpy(spellElement_shadowTag.element_internal_name, "spell_element_shadow_tag");
+
+	spellElementConstructor(&spellElement_telePull);
+	spellElement_telePull.mana = 19;
+	spellElement_telePull.base_mana = 19;
+	spellElement_telePull.overload_multiplier = 1;
+	spellElement_telePull.damage = 0;
+	spellElement_telePull.duration = 0;
+	strcpy(spellElement_telePull.element_internal_name, "spell_element_telepull");
+
+	spellElementConstructor(&spellElement_demonIllusion);
+	spellElement_demonIllusion.mana = 24;
+	spellElement_demonIllusion.base_mana = 24;
+	spellElement_demonIllusion.overload_multiplier = 1;
+	spellElement_demonIllusion.damage = 0;
+	spellElement_demonIllusion.duration = 0;
+	strcpy(spellElement_demonIllusion.element_internal_name, "spell_element_demon_illu");
+
+	spellElementConstructor(&spellElement_ghostBolt);
+	spellElement_ghostBolt.mana = 5;
+	spellElement_ghostBolt.base_mana = 5;
+	spellElement_ghostBolt.overload_multiplier = 1;
+	spellElement_ghostBolt.damage = 0;
+	spellElement_ghostBolt.duration = 75;
+	strcpy(spellElement_ghostBolt.element_internal_name, "spell_element_ghost_bolt");
+
+	spellConstructor(&spell_forcebolt);
+	strcpy(spell_forcebolt.spell_internal_name, "spell_forcebolt");
+	spell_forcebolt.ID = SPELL_FORCEBOLT;
+	spell_forcebolt.difficulty = 0;
+	node = list_AddNodeLast(&spell_forcebolt.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_force);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_magicmissile);
+	strcpy(spell_magicmissile.spell_internal_name, "spell_magicmissile");
+	spell_magicmissile.ID = SPELL_MAGICMISSILE;
+	spell_magicmissile.difficulty = 60;
+	node = list_AddNodeLast(&spell_magicmissile.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_magicmissile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_annihilateundead);
+	strcpy(spell_annihilateundead.spell_internal_name, "spell_annihilateundead");
+	spell_annihilateundead.ID = SPELL_ANNIHILATEUNDEAD;
+	spell_annihilateundead.difficulty = 100;
+	node = list_AddNodeLast(&spell_annihilateundead.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_annihilateundead);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_annihilatemonstrosities);
+	strcpy(spell_annihilatemonstrosities.spell_internal_name, "spell_annihilatemonstrosities");
+	spell_annihilatemonstrosities.ID = SPELL_ANNIHILATEMONSTROSITIES;
+	spell_annihilatemonstrosities.difficulty = 100;
+	node = list_AddNodeLast(&spell_annihilatemonstrosities.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_annihilatemonstrosities);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_annihilatehellspawn);
+	strcpy(spell_annihilatehellspawn.spell_internal_name, "spell_annihilatehellspawn");
+	spell_annihilatehellspawn.ID = SPELL_ANNIHILATEHELLSPAWN;
+	spell_annihilatehellspawn.difficulty = 100;
+	node = list_AddNodeLast(&spell_annihilatehellspawn.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_annihilatehellspawn);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_cold);
+	strcpy(spell_cold.spell_internal_name, "spell_cold");
+	spell_cold.ID = SPELL_COLD;
+	spell_cold.difficulty = 40;
+	node = list_AddNodeLast(&spell_cold.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_cold);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_fireball);
+	strcpy(spell_fireball.spell_internal_name, "spell_fireball");
+	spell_fireball.ID = SPELL_FIREBALL;
+	spell_fireball.difficulty = 20;
+	spell_fireball.elements.first = NULL;
+	spell_fireball.elements.last = NULL;
+	node = list_AddNodeLast(&spell_fireball.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_fire);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_lightning);
+	strcpy(spell_lightning.spell_internal_name, "spell_lightning");
+	spell_lightning.ID = SPELL_LIGHTNING;
+	spell_lightning.difficulty = 60;
+	spell_lightning.elements.first = NULL;
+	spell_lightning.elements.last = NULL;
+	node = list_AddNodeLast(&spell_lightning.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_lightning);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_removecurse);
+	strcpy(spell_removecurse.spell_internal_name, "spell_removecurse");
+	spell_removecurse.ID = SPELL_REMOVECURSE;
+	spell_removecurse.difficulty = 60;
+	spell_removecurse.elements.first = NULL;
+	spell_removecurse.elements.last = NULL;
+	node = list_AddNodeLast(&spell_removecurse.elements);
+	node->element = copySpellElement(&spellElement_removecurse);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+
+	spellConstructor(&spell_light);
+	strcpy(spell_light.spell_internal_name, "spell_light");
+	spell_light.ID = SPELL_LIGHT;
+	spell_light.difficulty = 0;
+	spell_light.elements.first = NULL;
+	spell_light.elements.last = NULL;
+	node = list_AddNodeLast(&spell_light.elements);
+	node->element = copySpellElement(&spellElement_light);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	element->channeled = true;
+
+	spellConstructor(&spell_identify);
+	strcpy(spell_identify.spell_internal_name, "spell_identify");
+	spell_identify.ID = SPELL_IDENTIFY;
+	spell_identify.difficulty = 60;
+	spell_identify.elements.first = NULL;
+	spell_identify.elements.last = NULL;
+	node = list_AddNodeLast(&spell_identify.elements);
+	node->element = copySpellElement(&spellElement_identify);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+
+	spellConstructor(&spell_magicmapping);
+	strcpy(spell_magicmapping.spell_internal_name, "spell_magicmapping");
+	spell_magicmapping.ID = SPELL_MAGICMAPPING;
+	spell_magicmapping.difficulty = 60;
+	spell_magicmapping.elements.first = NULL;
+	spell_magicmapping.elements.last = NULL;
+	node = list_AddNodeLast(&spell_magicmapping.elements);
+	node->element = copySpellElement(&spellElement_magicmapping);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_sleep);
+	strcpy(spell_sleep.spell_internal_name, "spell_sleep");
+	spell_sleep.ID = SPELL_SLEEP;
+	spell_sleep.difficulty = 20;
+	node = list_AddNodeLast(&spell_sleep.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_sleep);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_confuse);
+	strcpy(spell_confuse.spell_internal_name, "spell_confuse");
+	spell_confuse.ID = SPELL_CONFUSE;
+	spell_confuse.difficulty = 20;
+	node = list_AddNodeLast(&spell_confuse.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_confuse);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+	element->mana = 15; //Set the spell's mana to 15 so that it lasts ~30 seconds.
+
+	spellConstructor(&spell_slow);
+	strcpy(spell_slow.spell_internal_name, "spell_slow");
+	spell_slow.ID = SPELL_SLOW;
+	spell_slow.difficulty = 20;
+	node = list_AddNodeLast(&spell_slow.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_slow);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_opening);
+	strcpy(spell_opening.spell_internal_name, "spell_opening");
+	spell_opening.ID = SPELL_OPENING;
+	spell_opening.difficulty = 20;
+	node = list_AddNodeLast(&spell_opening.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_opening);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_locking);
+	strcpy(spell_locking.spell_internal_name, "spell_locking");
+	spell_locking.ID = SPELL_LOCKING;
+	spell_locking.difficulty = 20;
+	node = list_AddNodeLast(&spell_locking.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_locking);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_levitation);
+	strcpy(spell_levitation.spell_internal_name, "spell_levitation");
+	spell_levitation.ID = SPELL_LEVITATION;
+	spell_levitation.difficulty = 80;
+	spell_levitation.elements.first = NULL;
+	spell_levitation.elements.last = NULL;
+	node = list_AddNodeLast(&spell_levitation.elements);
+	node->element = copySpellElement(&spellElement_levitation);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	element->channeled = true;
+
+	spellConstructor(&spell_invisibility);
+	strcpy(spell_invisibility.spell_internal_name, "spell_invisibility");
+	spell_invisibility.ID = SPELL_INVISIBILITY;
+	spell_invisibility.difficulty = 80;
+	spell_invisibility.elements.first = NULL;
+	spell_invisibility.elements.last = NULL;
+	node = list_AddNodeLast(&spell_invisibility.elements);
+	node->element = copySpellElement(&spellElement_invisible);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	element->channeled = true;
+
+	spellConstructor(&spell_teleportation);
+	strcpy(spell_teleportation.spell_internal_name, "spell_teleportation");
+	spell_teleportation.ID = SPELL_TELEPORTATION;
+	spell_teleportation.difficulty = 80;
+	spell_teleportation.elements.first = NULL;
+	spell_teleportation.elements.last = NULL;
+	node = list_AddNodeLast(&spell_teleportation.elements);
+	node->element = copySpellElement(&spellElement_teleportation);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+
+	spellConstructor(&spell_polymorph);
+	strcpy(spell_polymorph.spell_internal_name, "spell_self_polymorph");
+	spell_polymorph.ID = SPELL_SELF_POLYMORPH;
+	spell_polymorph.difficulty = 60;
+	spell_polymorph.elements.first = NULL;
+	spell_polymorph.elements.last = NULL;
+	node = list_AddNodeLast(&spell_polymorph.elements);
+	node->element = copySpellElement(&spellElement_selfPolymorph);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+
+	spellConstructor(&spell_healing);
+	strcpy(spell_healing.spell_internal_name, "spell_healing");
+	spell_healing.ID = SPELL_HEALING;
+	spell_healing.difficulty = 20;
+	spell_healing.elements.first = NULL;
+	spell_healing.elements.last = NULL;
+	node = list_AddNodeLast(&spell_healing.elements);
+	node->element = copySpellElement(&spellElement_heal);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+	element->mana = 10;
+
+	spellConstructor(&spell_extrahealing);
+	strcpy(spell_extrahealing.spell_internal_name, "spell_extrahealing");
+	spell_extrahealing.ID = SPELL_EXTRAHEALING;
+	spell_extrahealing.difficulty = 60;
+	spell_extrahealing.elements.first = NULL;
+	spell_extrahealing.elements.last = NULL;
+	node = list_AddNodeLast(&spell_extrahealing.elements);
+	node->element = copySpellElement(&spellElement_heal);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+	element->mana = 40;
+
+	/*spellConstructor(&spell_restoreability);
+	//spell_restoreability.mana = 1;
+	strcpy(spell_restoreability.name, "Restore Ability");
+	spell_restoreability.ID = SPELL_RESTOREABILITY;
+	spell_restoreability.difficulty = 100; //Basically unlearnable (since unimplemented).*/
+
+	spellConstructor(&spell_cureailment);
+	strcpy(spell_cureailment.spell_internal_name, "spell_cureailment");
+	spell_cureailment.ID = SPELL_CUREAILMENT;
+	spell_cureailment.difficulty = 20;
+	spell_cureailment.elements.first = NULL;
+	spell_cureailment.elements.last = NULL;
+	node = list_AddNodeLast(&spell_cureailment.elements);
+	node->element = copySpellElement(&spellElement_cure_ailment);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_dig);
+	strcpy(spell_dig.spell_internal_name, "spell_dig");
+	spell_dig.ID = SPELL_DIG;
+	spell_dig.difficulty = 40;
+	spell_dig.elements.first = NULL;
+	spell_dig.elements.last = NULL;
+	node = list_AddNodeLast(&spell_dig.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_dig);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_stoneblood);
+	strcpy(spell_stoneblood.spell_internal_name, "spell_stoneblood");
+	spell_stoneblood.ID = SPELL_STONEBLOOD;
+	spell_stoneblood.difficulty = 80;
+	node = list_AddNodeLast(&spell_stoneblood.elements);
+	node->element = copySpellElement(&spellElement_missile_trio);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_stoneblood);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_bleed);
+	strcpy(spell_bleed.spell_internal_name, "spell_bleed");
+	spell_bleed.ID = SPELL_BLEED;
+	spell_bleed.difficulty = 80;
+	node = list_AddNodeLast(&spell_bleed.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_bleed);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_summon);
+	strcpy(spell_summon.spell_internal_name, "spell_summon");
+	spell_summon.ID = SPELL_SUMMON;
+	spell_summon.difficulty = 40;
+	spell_summon.elements.first = NULL;
+	spell_summon.elements.last = NULL;
+	node = list_AddNodeLast(&spell_summon.elements);
+	node->element = copySpellElement(&spellElement_summon);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_dominate);
+	strcpy(spell_dominate.spell_internal_name, "spell_dominate");
+	spell_dominate.ID = SPELL_DOMINATE;
+	spell_dominate.difficulty = 100;
+	node = list_AddNodeLast(&spell_dominate.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_dominate);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node;
+
+	spellConstructor(&spell_reflectMagic);
+	strcpy(spell_reflectMagic.spell_internal_name, "spell_reflect_magic");
+	spell_reflectMagic.ID = SPELL_REFLECT_MAGIC;
+	spell_reflectMagic.difficulty = 80;
+	spell_reflectMagic.elements.first = nullptr;
+	spell_reflectMagic.elements.last = nullptr;
+	node = list_AddNodeLast(&spell_reflectMagic.elements);
+	node->element = copySpellElement(&spellElement_reflectMagic);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*) node->element;
+	element->node = node; //Tell the element what list it resides in.
+	element->channeled = true;
+
+	spellConstructor(&spell_acidSpray);
+	strcpy(spell_acidSpray.spell_internal_name, "spell_acid_spray");
+	spell_acidSpray.ID = SPELL_ACID_SPRAY;
+	spell_acidSpray.difficulty = 80;
+	node = list_AddNodeLast(&spell_acidSpray.elements);
+	node->element = copySpellElement(&spellElement_missile_trio);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+						  //Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_acidSpray);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_stealWeapon);
+	strcpy(spell_stealWeapon.spell_internal_name, "spell_steal_weapon");
+	spell_stealWeapon.ID = SPELL_STEAL_WEAPON;
+	spell_stealWeapon.difficulty = 100;
+	node = list_AddNodeLast(&spell_stealWeapon.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+						  //Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_stealWeapon);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_drainSoul);
+	strcpy(spell_drainSoul.spell_internal_name, "spell_drain_soul");
+	spell_drainSoul.ID = SPELL_DRAIN_SOUL;
+	spell_drainSoul.difficulty = 80;
+	node = list_AddNodeLast(&spell_drainSoul.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_drainSoul);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_vampiricAura);
+	strcpy(spell_vampiricAura.spell_internal_name, "spell_vampiric_aura");
+	spell_vampiricAura.ID = SPELL_VAMPIRIC_AURA;
+	spell_vampiricAura.difficulty = 80;
+	spell_vampiricAura.elements.first = nullptr;
+	spell_vampiricAura.elements.last = nullptr;
+	node = list_AddNodeLast(&spell_vampiricAura.elements);
+	node->element = copySpellElement(&spellElement_vampiricAura);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	element->channeled = true;
+
+	spellConstructor(&spell_amplifyMagic);
+	strcpy(spell_amplifyMagic.spell_internal_name, "spell_amplify_magic");
+	spell_amplifyMagic.ID = SPELL_AMPLIFY_MAGIC;
+	spell_amplifyMagic.difficulty = 80;
+	spell_amplifyMagic.elements.first = nullptr;
+	spell_amplifyMagic.elements.last = nullptr;
+	node = list_AddNodeLast(&spell_amplifyMagic.elements);
+	node->element = copySpellElement(&spellElement_amplifyMagic);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	element->channeled = true;
+
+	spellConstructor(&spell_charmMonster);
+	strcpy(spell_charmMonster.spell_internal_name, "spell_charm");
+	spell_charmMonster.ID = SPELL_CHARM_MONSTER;
+	spell_charmMonster.difficulty = 80;
+	node = list_AddNodeLast(&spell_charmMonster.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+						  //Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_charmMonster);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_revertForm);
+	strcpy(spell_revertForm.spell_internal_name, "spell_revert_form");
+	spell_revertForm.ID = SPELL_REVERT_FORM;
+	spell_revertForm.difficulty = 0;
+	spell_revertForm.elements.first = NULL;
+	spell_revertForm.elements.last = NULL;
+	node = list_AddNodeLast(&spell_revertForm.elements);
+	node->element = copySpellElement(&spellElement_shapeshift);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+	element->mana = 5;
+
+	spellConstructor(&spell_ratForm);
+	strcpy(spell_ratForm.spell_internal_name, "spell_rat_form");
+	spell_ratForm.ID = SPELL_RAT_FORM;
+	spell_ratForm.difficulty = 0;
+	spell_ratForm.elements.first = NULL;
+	spell_ratForm.elements.last = NULL;
+	node = list_AddNodeLast(&spell_ratForm.elements);
+	node->element = copySpellElement(&spellElement_shapeshift);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+	element->mana = 8;
+
+	spellConstructor(&spell_spiderForm);
+	strcpy(spell_spiderForm.spell_internal_name, "spell_spider_form");
+	spell_spiderForm.ID = SPELL_SPIDER_FORM;
+	spell_spiderForm.difficulty = 40;
+	spell_spiderForm.elements.first = NULL;
+	spell_spiderForm.elements.last = NULL;
+	node = list_AddNodeLast(&spell_spiderForm.elements);
+	node->element = copySpellElement(&spellElement_shapeshift);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+	element->mana = 16;
+
+	spellConstructor(&spell_trollForm);
+	strcpy(spell_trollForm.spell_internal_name, "spell_troll_form");
+	spell_trollForm.ID = SPELL_TROLL_FORM;
+	spell_trollForm.difficulty = 60;
+	spell_trollForm.elements.first = NULL;
+	spell_trollForm.elements.last = NULL;
+	node = list_AddNodeLast(&spell_trollForm.elements);
+	node->element = copySpellElement(&spellElement_shapeshift);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+	element->mana = 24;
+
+	spellConstructor(&spell_impForm);
+	strcpy(spell_impForm.spell_internal_name, "spell_imp_form");
+	spell_impForm.ID = SPELL_IMP_FORM;
+	spell_impForm.difficulty = 80;
+	spell_impForm.elements.first = NULL;
+	spell_impForm.elements.last = NULL;
+	node = list_AddNodeLast(&spell_impForm.elements);
+	node->element = copySpellElement(&spellElement_shapeshift);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+	element->mana = 32;
+
+	spellConstructor(&spell_sprayWeb);
+	strcpy(spell_sprayWeb.spell_internal_name, "spell_spray_web");
+	spell_sprayWeb.ID = SPELL_SPRAY_WEB;
+	spell_sprayWeb.difficulty = 20;
+	node = list_AddNodeLast(&spell_sprayWeb.elements);
+	node->element = copySpellElement(&spellElement_missile_trio);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+						  //Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_sprayWeb);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_poison);
+	strcpy(spell_poison.spell_internal_name, "spell_poison");
+	spell_poison.ID = SPELL_POISON;
+	spell_poison.difficulty = 40;
+	node = list_AddNodeLast(&spell_poison.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+						  //Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_poison);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_speed);
+	strcpy(spell_speed.spell_internal_name, "spell_speed");
+	spell_speed.ID = SPELL_SPEED;
+	spell_speed.difficulty = 40;
+	spell_speed.elements.first = NULL;
+	spell_speed.elements.last = NULL;
+	node = list_AddNodeLast(&spell_speed.elements);
+	node->element = copySpellElement(&spellElement_speed);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_fear);
+	strcpy(spell_fear.spell_internal_name, "spell_fear");
+	spell_fear.ID = SPELL_FEAR;
+	spell_fear.difficulty = 80;
+	spell_fear.elements.first = NULL;
+	spell_fear.elements.last = NULL;
+	node = list_AddNodeLast(&spell_fear.elements);
+	node->element = copySpellElement(&spellElement_fear);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_weakness);
+	strcpy(spell_weakness.spell_internal_name, "spell_weakness");
+	spell_weakness.ID = SPELL_WEAKNESS;
+	spell_weakness.difficulty = 100;
+	node = list_AddNodeLast(&spell_weakness.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+						  //Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_weakness);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_strike);
+	strcpy(spell_strike.spell_internal_name, "spell_strike");
+	spell_strike.ID = SPELL_STRIKE;
+	spell_strike.difficulty = 80;
+	spell_strike.elements.first = NULL;
+	spell_strike.elements.last = NULL;
+	node = list_AddNodeLast(&spell_strike.elements);
+	node->element = copySpellElement(&spellElement_strike);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_detectFood);
+	strcpy(spell_detectFood.spell_internal_name, "spell_detect_food");
+	spell_detectFood.ID = SPELL_DETECT_FOOD;
+	spell_detectFood.difficulty = 40;
+	spell_detectFood.elements.first = NULL;
+	spell_detectFood.elements.last = NULL;
+	node = list_AddNodeLast(&spell_detectFood.elements);
+	node->element = copySpellElement(&spellElement_detectFood);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_trollsBlood);
+	strcpy(spell_trollsBlood.spell_internal_name, "spell_trolls_blood");
+	spell_trollsBlood.ID = SPELL_TROLLS_BLOOD;
+	spell_trollsBlood.difficulty = 40;
+	spell_trollsBlood.elements.first = NULL;
+	spell_trollsBlood.elements.last = NULL;
+	node = list_AddNodeLast(&spell_trollsBlood.elements);
+	node->element = copySpellElement(&spellElement_trollsBlood);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_flutter);
+	strcpy(spell_flutter.spell_internal_name, "spell_flutter");
+	spell_flutter.ID = SPELL_FLUTTER;
+	spell_flutter.difficulty = 60;
+	spell_flutter.elements.first = NULL;
+	spell_flutter.elements.last = NULL;
+	node = list_AddNodeLast(&spell_flutter.elements);
+	node->element = copySpellElement(&spellElement_flutter);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_dash);
+	strcpy(spell_dash.spell_internal_name, "spell_dash");
+	spell_dash.ID = SPELL_DASH;
+	spell_dash.difficulty = 40;
+	spell_dash.elements.first = NULL;
+	spell_dash.elements.last = NULL;
+	node = list_AddNodeLast(&spell_dash.elements);
+	node->element = copySpellElement(&spellElement_dash);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_shadowTag);
+	strcpy(spell_shadowTag.spell_internal_name, "spell_shadow_tag");
+	spell_shadowTag.ID = SPELL_SHADOW_TAG;
+	spell_shadowTag.difficulty = 20;
+	node = list_AddNodeLast(&spell_shadowTag.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+						  //Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_shadowTag);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_telePull);
+	strcpy(spell_telePull.spell_internal_name, "spell_telepull");
+	spell_telePull.ID = SPELL_TELEPULL;
+	spell_telePull.difficulty = 60;
+	node = list_AddNodeLast(&spell_telePull.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+						  //Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_telePull);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_demonIllusion);
+	strcpy(spell_demonIllusion.spell_internal_name, "spell_demon_illu");
+	spell_demonIllusion.ID = SPELL_DEMON_ILLUSION;
+	spell_demonIllusion.difficulty = 80;
+	node = list_AddNodeLast(&spell_demonIllusion.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+						  //Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_demonIllusion);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_salvageItem);
+	strcpy(spell_salvageItem.spell_internal_name, "spell_salvage");
+	spell_salvageItem.ID = SPELL_SALVAGE;
+	spell_salvageItem.difficulty = 20;
+	spell_salvageItem.elements.first = NULL;
+	spell_salvageItem.elements.last = NULL;
+	node = list_AddNodeLast(&spell_salvageItem.elements);
+	node->element = copySpellElement(&spellElement_salvageItem);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
+
+	spellConstructor(&spell_ghost_bolt);
+	strcpy(spell_ghost_bolt.spell_internal_name, "spell_ghost_bolt");
+	spell_ghost_bolt.ID = SPELL_GHOST_BOLT;
+	spell_ghost_bolt.difficulty = 100;
+	spell_ghost_bolt.elements.first = NULL;
+	spell_ghost_bolt.elements.last = NULL;
+	node = list_AddNodeLast(&spell_ghost_bolt.elements);
+	node->element = copySpellElement(&spellElement_missile);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node; //Tell the element what list it resides in.
+	//Now for the second element.
+	element->elements.first = NULL;
+	element->elements.last = NULL;
+	node = list_AddNodeLast(&element->elements);
+	node->element = copySpellElement(&spellElement_ghostBolt);
+	node->size = sizeof(spellElement_t);
+	node->deconstructor = &spellElementDeconstructor;
+	element = (spellElement_t*)node->element;
+	element->node = node;
 }
