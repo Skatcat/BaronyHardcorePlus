@@ -121,8 +121,8 @@ void initClassStats(const int classnum, void* myStats)
 		stat->setProficiency(PRO_APPRAISAL, 25);
 		stat->setProficiency(PRO_STEALTH, 50);
 		stat->setProficiency(PRO_LOCKPICKING, 40);
-		stat->setProficiency(PRO_RANGED, 25);
-		stat->setProficiency(PRO_SWORD, 25);
+		stat->setProficiency(PRO_RANGED, 30);
+		stat->setProficiency(PRO_SWORD, 30);
 		stat->setProficiency(PRO_ALCHEMY, 20);
 	}
 	// wanderer
@@ -281,7 +281,7 @@ void initClassStats(const int classnum, void* myStats)
 		stat->DEX += 2;
 		stat->CON -= 1;
 		stat->INT -= 2;
-		stat->PER += 1;
+		stat->PER += 2;
 
 		stat->MAXHP += 5;
 		stat->HP += 5;
@@ -289,7 +289,7 @@ void initClassStats(const int classnum, void* myStats)
 		// skills
 		stat->setProficiency(PRO_STEALTH, 60);
 		stat->setProficiency(PRO_SWORD, 60);
-		stat->setProficiency(PRO_RANGED, 40);
+		stat->setProficiency(PRO_RANGED, 20);
 	}
 	// monk
 	else if ( classnum == CLASS_MONK )
@@ -401,7 +401,7 @@ void initClassStats(const int classnum, void* myStats)
 		stat->setProficiency(PRO_TRADING, 10);
 		stat->setProficiency(PRO_APPRAISAL, 10);
 		stat->setProficiency(PRO_LEADERSHIP, 25);
-		stat->setProficiency(PRO_ALCHEMY, 50);
+		stat->setProficiency(PRO_ALCHEMY, 40); // fskin note: reduced by 10 since he spawns with goggles
 	}
 	else if ( classnum == CLASS_SHAMAN )
 	{
@@ -602,8 +602,8 @@ void initClass(const int player)
 			return;
 		}
         
-        // ring of strength
-        item = newItem(RING_STRENGTH, WORN, 0, 1, 0, true, nullptr);
+        // ring of rage
+        item = newItem(RING_RAGE, EXCELLENT, 0, 1, 1, true, nullptr);
         if ( isLocalPlayer )
         {
             item2 = itemPickup(player, item);
@@ -676,6 +676,11 @@ void initClass(const int player)
 
 			// booze
 			item = newItem(POTION_BOOZE, EXCELLENT, 0, 1, 2, true, nullptr);
+			item2 = itemPickup(player, item);
+			free(item);
+
+			// potion of strength
+			item = newItem(POTION_STRENGTH, EXCELLENT, 0, 2, 0, true, nullptr);
 			item2 = itemPickup(player, item);
 			free(item);
 
@@ -1003,6 +1008,18 @@ void initClass(const int player)
 			item2 = itemPickup(player, item);
 			hotbar[5].item = item2->uid;
 			free(item);
+
+			// daggers // fskin note: daggers and beartrap are now rogue items
+			item = newItem(IRON_DAGGER, WORN, 0, 3, 0, true, nullptr);
+			item2 = itemPickup(player, item);
+			hotbar[6].item = item2->uid;
+			free(item);
+
+			// bear trap
+			item = newItem(TOOL_BEARTRAP, EXCELLENT, 0, 1, 0, true, nullptr);
+			item2 = itemPickup(player, item);
+			hotbar[7].item = item2->uid;
+			free(item);
 		}
 	}
 	// wanderer
@@ -1317,6 +1334,12 @@ void initClass(const int player)
 			hotbar[1].item = item2->uid;
 			free(item);
 
+			// orb
+			item = newItem(ARTIFACT_ORB_PURPLE, EXCELLENT, 0, 1, 0, true, nullptr);
+			item2 = itemPickup(player, item);
+			hotbar[1].item = item2->uid;
+			free(item);
+
 			// gloves
 			item = newItem(GLOVES, EXCELLENT, 0, 1, 0, true, nullptr);
 			item2 = itemPickup(player, item);
@@ -1564,6 +1587,11 @@ void initClass(const int player)
 			item = newItem(QUIVER_FIRE, SERVICABLE, 0, 15, 0, true, nullptr);
 			item2 = itemPickup(player, item);
 			hotbar[1].item = item2->uid;
+			free(item);
+
+			// ammo //fskin note: add arcane ammo to arcanist
+			item = newItem(QUIVER_ARCANE, SERVICABLE, 0, 20, 0, true, nullptr);
+			item2 = itemPickup(player, item);
 			free(item);
 
 			// magicstaff of opening
@@ -1929,16 +1957,10 @@ void initClass(const int player)
 
 		if ( isLocalPlayer )
 		{
-			// daggers
-			item = newItem(IRON_DAGGER, WORN, 0, 5, 0, true, nullptr);
+			// shuriken // fskin note: changed to shuriken
+			item = newItem(CRYSTAL_SHURIKEN, SERVICABLE, 0, 1, 0, true, nullptr);
 			item2 = itemPickup(player, item);
 			hotbar[1].item = item2->uid;
-			free(item);
-
-			// bear trap
-			item = newItem(TOOL_BEARTRAP, SERVICABLE, 0, 3, 0, true, nullptr);
-			item2 = itemPickup(player, item);
-			hotbar[2].item = item2->uid;
 			free(item);
 			
 			// paralyze potion
@@ -1953,11 +1975,18 @@ void initClass(const int player)
 			hotbar[3].item = item2->uid;
 			free(item);
 
-			// teleport scroll
-			item = newItem(SCROLL_TELEPORTATION, SERVICABLE, 0, 3, 0, true, nullptr);
+			// confusion potion // fskin note: added
+			item = newItem(POTION_CONFUSION, EXCELLENT, 0, 2, 1, true, nullptr);
 			item2 = itemPickup(player, item);
 			hotbar[5].item = item2->uid;
 			free(item);
+
+			// teleport scroll
+			item = newItem(SCROLL_TELEPORTATION, SERVICABLE, 0, 3, 0, true, nullptr);
+			item2 = itemPickup(player, item);
+			hotbar[6].item = item2->uid;
+			free(item);
+
 		}
 	}
 	// monk
@@ -2291,8 +2320,8 @@ void initClass(const int player)
 			free(item);
 		}
 
-		// empty bottles
-		item = newItem(POTION_EMPTY, SERVICABLE, 0, 3, 0, true, nullptr);
+		// empty bottles // fskin note: increased empty bottles
+		item = newItem(POTION_EMPTY, SERVICABLE, 0, 10, 0, true, nullptr);
 		if ( isLocalPlayer )
 		{
 			item2 = itemPickup(player, item);
@@ -2303,6 +2332,19 @@ void initClass(const int player)
 		else
 		{
 			equipItem(item, &stats[player]->weapon, player, false);
+		}
+
+		// fskin note: added hazard goggles
+		item = newItem(MASK_HAZARD_GOGGLES, SERVICABLE, 0, 1, 0, true, nullptr);
+		if (isLocalPlayer)
+		{
+			item2 = itemPickup(player, item);
+			useItem(item2, player);
+			free(item);
+		}
+		else
+		{
+			useItem(item, player);
 		}
 
 		// boots
@@ -2372,13 +2414,28 @@ void initClass(const int player)
 			item2 = itemPickup(player, item);
 			free(item);
 
+			// paralysis // fskin note: new potions
+			item = newItem(POTION_PARALYSIS, EXCELLENT, 0, 2, 0, true, nullptr);
+			item2 = itemPickup(player, item);
+			free(item);
+
+			// healing
+			item = newItem(POTION_HEALING, EXCELLENT, 0, 1, 0, true, nullptr);
+			item2 = itemPickup(player, item);
+			free(item);
+
+			// strength
+			item = newItem(POTION_STRENGTH, EXCELLENT, 0, 2, 0, true, nullptr);
+			item2 = itemPickup(player, item);
+			free(item);
+
 			// speed
 			item = newItem(POTION_SPEED, EXCELLENT, 0, 1, 0, true, nullptr);
 			item2 = itemPickup(player, item);
 			free(item);
 
 			// bread
-			item = newItem(FOOD_BREAD, SERVICABLE, 0, 1, 0, true, nullptr);
+			item = newItem(FOOD_BREAD, EXCELLENT, 0, 1, 0, true, nullptr);
 			item2 = itemPickup(player, item);
 			free(item);
 
