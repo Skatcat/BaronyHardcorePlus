@@ -992,6 +992,7 @@ public:
 	void clearMonsterInteract(); // tidy up flags after interaction.
 	bool monsterSetPathToLocation(int destX, int destY, int adjacentTilesToCheck, int pathingType, bool tryRandomSpot = false); // monster create path to destination, search adjacent tiles if specified target is inaccessible.
 	bool gyrobotSetPathToReturnLocation(int destX, int destY, int adjacentTilesToCheck, bool tryRandomSpot = false); // gyrobot create path to destination to land safely.
+	void drainShieldMP(Stat* myStats); // returns the value of magic resistance of a monster
 	static int getMagicResistance(Stat* myStats); // returns the value of magic resistance of a monster.
 	void playerLevelEntrySpeechSecond(); // handle secondary voice lines for post-herx content
 	bool isPlayerHeadSprite() const; // determines if model of entity is a human head.
@@ -1147,8 +1148,8 @@ void actTextSource(Entity* my);
 
 //checks if a sprite falls in certain sprite ranges
 
-static const int NUM_ITEM_STRINGS = 336; //fskin note: this garbage needs to be adjusted to add new items n stuff
-static const int NUM_ITEM_STRINGS_BY_TYPE = 132;
+static const int NUM_ITEM_STRINGS = 339; //fskin note: this garbage needs to be adjusted to add new items n stuff
+static const int NUM_ITEM_STRINGS_BY_TYPE = 135;
 static const int NUM_EDITOR_SPRITES = 180;
 static const int NUM_EDITOR_TILES = 350;
 
