@@ -57,7 +57,8 @@ enum ArrowSpriteTypes : int
 	PROJECTILE_FIRE_SPRITE,
 	PROJECTILE_HEAVY_SPRITE,
 	PROJECTILE_CRYSTAL_SPRITE,
-	PROJECTILE_HUNTING_SPRITE
+	PROJECTILE_HUNTING_SPRITE,
+	PROJECTILE_ARCANE_SPRITE
 };
 
 void actArrow(Entity* my)
@@ -213,6 +214,19 @@ void actArrow(Entity* my)
 				particle->lightBonus = vec4(0.5f, 0.5f, 0.5f, 0.f);
 				particle->flags[SPRITE] = true;
                 particle->ditheringDisabled = true;
+			}
+		}
+	}
+	else if (my->arrowQuiverType == QUIVER_ARCANE || my->sprite == PROJECTILE_ARCANE_SPRITE)
+	{
+		if (ARROW_STUCK == 0)
+		{
+			Entity* particle = spawnMagicParticleCustom(my, 156, 0.5, 4);
+			if (particle)
+			{
+				particle->lightBonus = vec4(0.5f, 0.5f, 0.5f, 0.f);
+				particle->flags[SPRITE] = true;
+				particle->ditheringDisabled = true;
 			}
 		}
 	}
@@ -591,6 +605,92 @@ void actArrow(Entity* my)
 						damage *= 1.5;
 					}
 
+					if ( parent )
+					{
+						real_t dist = entityDist(parent, hit.entity); // fskin note: sniper bonus
+						if (hitstats->type == LICH
+							|| hitstats->type == DEVIL
+							|| hitstats->type == LICH_ICE
+							|| hitstats->type == LICH_FIRE)
+						{
+							// bosses excluded
+						}
+						else
+						{
+							if (dist > 175)
+							{
+								damage *= parent->getPER() / 7;
+								damage += hitstats->HP / 5;
+								damage += dist/5;
+
+								Uint32 color = makeColorRGB(0, 255, 225);
+								messagePlayerMonsterEvent(parent->skill[1], color, *hitstats, Language::get(3732), Language::get(3732), MSG_COMBAT);
+							}
+						}
+					}
+
+					// fskin note: cause fear dependent on CHR - specific enemy interactions are hardcoded instead of using enemy CHR for the calculation.
+					// this is because giving every enemy on every map and for every tileset of the monstercurve appropriate CHR stats would be incredibly annoying work.
+					if (parent && parent->behavior == &actPlayer)
+					{
+						if (parent->getStats()->weapon)
+						{
+							if (damage > 0 && parent->getStats()->weapon->type == HEAVY_CROSSBOW)
+							{
+								if (parent->getStats()->CHR > 0)
+
+									if (((hitstats->type == RAT && hitstats->MAXHP < parent->getStats()->CHR * 9 * (parent->getStats()->getProficiency(PRO_RANGED)/10))
+										|| (hitstats->type == SKELETON && hitstats->MAXHP < parent->getStats()->CHR * 9)
+										|| (hitstats->type == SPIDER && hitstats->MAXHP < parent->getStats()->CHR * 9)
+										|| (hitstats->type == GNOME && hitstats->MAXHP < parent->getStats()->CHR * 9)
+										|| (hitstats->type == TROLL && hitstats->MAXHP < parent->getStats()->CHR * 11)
+										|| (hitstats->type == GHOUL && hitstats->MAXHP < parent->getStats()->CHR * 8)
+										|| (hitstats->type == SLIME && hitstats->MAXHP < parent->getStats()->CHR * 8)
+										|| (hitstats->type == GOBLIN && hitstats->MAXHP < parent->getStats()->CHR * 7.5)
+										|| (hitstats->type == SCARAB && hitstats->MAXHP < parent->getStats()->CHR * 7)
+										|| (hitstats->type == SCORPION && hitstats->MAXHP < parent->getStats()->CHR * 7)
+										|| (hitstats->type == INSECTOID && hitstats->MAXHP < parent->getStats()->CHR * 9)
+										|| (hitstats->type == CREATURE_IMP && hitstats->MAXHP < parent->getStats()->CHR * 7)
+										|| (hitstats->type == DEMON && hitstats->MAXHP < parent->getStats()->CHR * 8)
+										|| (hitstats->type == AUTOMATON && hitstats->MAXHP < parent->getStats()->CHR * 7)
+										|| (hitstats->type == VAMPIRE && hitstats->MAXHP < parent->getStats()->CHR * 9)
+										|| (hitstats->type == GOATMAN && hitstats->MAXHP < parent->getStats()->CHR * 9 )
+										|| (hitstats->type == SUCCUBUS && hitstats->MAXHP < parent->getStats()->CHR * 10)
+										|| (hitstats->type == INCUBUS && hitstats->MAXHP < parent->getStats()->CHR * 10)
+										|| (hitstats->type == KOBOLD && hitstats->MAXHP < parent->getStats()->CHR * 10)
+										|| (hitstats->type == COCKATRICE && hitstats->MAXHP < parent->getStats()->CHR * 10 && hitstats->HP < hitstats->MAXHP / 4)
+										|| (hitstats->type == CRYSTALGOLEM && hitstats->MAXHP < parent->getStats()->CHR * 6)
+										) || (currentlevel > 35 && parent->getStats()->CHR > currentlevel * 1.8)
+										|| (currentlevel >= 25 && currentlevel <= 35 && parent->getStats()->CHR > currentlevel * 1.9)
+										|| (currentlevel >= 10 && currentlevel <= 24 && parent->getStats()->CHR > currentlevel * 2.5))
+									{
+										{
+											//int duration = parent->getStats()->CHR * 2.6 - ((hitstats->CHR * (hitstats->HP / hitstats->MAXHP)) + damage*0.8);
+											int duration = (parent->getStats()->CHR * 2.5) + damage * 0.5;
+											if (duration >= 200)
+											{
+												duration = 200;
+											}
+											if (parent->getStats()->MAXHP >= hitstats->MAXHP * 1.2)
+										 	{
+												duration += parent->getStats()->CHR;
+											}
+											if (backstab)
+											{
+												duration += parent->getStats()->getProficiency(PRO_STEALTH);
+											}
+
+											if (hitstats->HP > 0 && !hitstats->EFFECTS[EFF_FEAR] && !hitstats->EFFECTS[EFF_WITHDRAWAL])
+											{
+												hit.entity->setEffect(EFF_FEAR, true, duration, true);
+												hit.entity->setEffect(EFF_WITHDRAWAL, true, 500, true);
+											}
+										}
+									}
+							}
+						}
+					}
+
 					bool hitWeaklyOnTarget = false;
 					int nominalDamage = damage;
 					if ( parent )
@@ -762,7 +862,7 @@ void actArrow(Entity* my)
 					}
 
 					// alert the monster
-					if ( hit.entity->behavior == &actMonster && parent != nullptr )
+					if ( hit.entity->behavior == &actMonster && parent != nullptr && currentlevel != 42 && currentlevel != 43) //fskin note: hack to make monsters not beef on the arena level
 					{
 						bool alertTarget = true;
 						if ( parent->behavior == &actMonster && parent->monsterAllyIndex != -1 )
@@ -881,39 +981,39 @@ void actArrow(Entity* my)
 					}
 
 					bool statusEffectApplied = false;
-					if ( hitstats->HP > 0 )
+					if (hitstats->HP > 0)
 					{
 						bool procEffect = true;
-						if ( trapResist > 0 )
+						if (trapResist > 0)
 						{
-							if ( local_rng.rand() % 100 < trapResist )
+							if (local_rng.rand() % 100 < trapResist)
 							{
 								procEffect = false;
 							}
 						}
-						if ( my->arrowQuiverType == QUIVER_FIRE && procEffect )
+						if (my->arrowQuiverType == QUIVER_FIRE && procEffect)
 						{
 							bool burning = hit.entity->flags[BURNING];
 							hit.entity->SetEntityOnFire(my);
-							if ( hitstats )
+							if (hitstats)
 							{
 								hitstats->burningInflictedBy = static_cast<Sint32>(my->parent);
 							}
-							if ( !burning && hit.entity->flags[BURNING] )
+							if (!burning && hit.entity->flags[BURNING])
 							{
-								if ( parent && parent->behavior == &actPlayer )
+								if (parent && parent->behavior == &actPlayer)
 								{
 									Uint32 color = makeColorRGB(0, 255, 0);
-									if ( hitstats )
+									if (hitstats)
 									{
 										messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3739), Language::get(3740), MSG_COMBAT);
-										if ( hit.entity->behavior == &actMonster )
+										if (hit.entity->behavior == &actMonster)
 										{
 											achievementObserver.addEntityAchievementTimer(hit.entity, AchievementObserver::BARONY_ACH_PLEASE_HOLD, 150, true, 0);
 										}
 									}
 								}
-								if ( hit.entity->behavior == &actPlayer )
+								if (hit.entity->behavior == &actPlayer)
 								{
 									Uint32 color = makeColorRGB(255, 0, 0);
 									messagePlayerColor(hit.entity->skill[2], MESSAGE_COMBAT, color, Language::get(3741));
@@ -921,6 +1021,13 @@ void actArrow(Entity* my)
 								statusEffectApplied = true;
 							}
 						}
+
+						else if ( my->arrowQuiverType == QUIVER_ARCANE && procEffect) //fskin note: arcane arrow
+						{
+							hitstats->EFFECTS[EFF_SHADOW_TAGGED] = true;
+							hitstats->EFFECTS_TIMERS[EFF_SHADOW_TAGGED] = 1500;
+						}
+
 						else if ( my->arrowQuiverType == QUIVER_KNOCKBACK && procEffect && hit.entity->setEffect(EFF_KNOCKBACK, true, 30, false) )
 						{
 							real_t pushbackMultiplier = 0.6;
