@@ -423,7 +423,7 @@ static double damagetables[NUMMONSTERS][7] =
 	{ 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f }, // nothing //fskin note: damage tables adjusted
 	{ 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f }, // human
 	{ 1.1, 1.1, 0.9, 0.9, 1.2, 1.f, 1.3 }, // rat
-	{ 0.9, 1.f, 1.1, 1.1, 1.1, 1.f, 0.8 }, // goblin
+	{ 0.9, 0.9, 0.9, 0.9, 1.1, 1.f, 1.f }, // goblin
 	{ 1.4, 0.5, 1.3, 0.7, 0.5, 1.6, 0.5 }, // slime
 	{ 1.1, 0.8, 1.1, 0.8, 0.7, 1.f, 0.8 }, // troll
 	{ 1.2, 1.f, 1.1, 0.9, 1.1, 1.f, 1.f }, // octopus
@@ -435,9 +435,9 @@ static double damagetables[NUMMONSTERS][7] =
 	{ 1.f, 1.1, 1.f, 1.2, 1.1, 1.f, 1.1 }, // crab
 	{ 0.9, 1.f, 1.f, 0.9, 1.1, 1.3, 1.f }, // gnome
 	{ 0.9, 0.8, 1.f, 0.8, 0.9, 1.3, 1.f }, // demon
-	{ 1.4, 1.f, 1.f, 0.9, 1.f, 0.5, 1.f }, // succubus
+	{ 1.5, 1.1, 1.1, 1.f, 1.1, 0.5, 1.f }, // succubus
 	{ 0.5, 0.5, 1.0, 0.5, 0.5, 1.7, 0.5 }, // mimic
-	{ 1.f, 1.f, 1.f, 1.f, 1.6, 2.8, 2.f }, // lich
+	{ 1.f, 1.f, 1.f, 1.f, 1.6, 2.6, 2.f }, // lich
 	{ 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f }, // minotaur
 	{ 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 2.f }, // devil
 	{ 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5 }, // shopkeeper
@@ -445,14 +445,14 @@ static double damagetables[NUMMONSTERS][7] =
 	{ 1.5, 1.1, 1.4, 0.7, 1.f, 0.2, 1.4 }, // scarab
 	{ 1.f, 1.5, 1.3, 0.8, 0.8, 1.f, 0.6 }, // crystal golem
 	{ 1.2, 1.f, 1.f, 0.7, 1.5, 0.6, 1.f }, // incubus
-	{ 1.1, 1.3, 1.1, 1.2, 0.9, 0.6, 2.f }, // vampire
+	{ 1.2, 1.4, 1.2, 1.3, 1.f, 0.6, 2.f }, // vampire
 	{ 0.5, 0.5, 0.5, 0.5, 1.f, 2.0, 0.5 }, // shadow
 	{ 1.6, 1.1, 1.3, 1.8, 0.6, 1.f, 1.f }, // cockatrice
-	{ 1.f, 0.7, 1.3, 1.3, 1.3, 1.f, 0.8 }, // insectoid
-	{ 0.7, 1.f, 1.1, 1.1, 1.3, 1.7, 1.f }, // goatman
-	{ 1.f, 1.4, 1.3, 1.f, 0.8, 1.2, 0.8 }, // automaton
-	{ 1.5, 1.5, 1.5, 1.5, 2.2, 0.9, 2.5 }, // lich ice
-	{ 1.8, 1.8, 1.8, 1.8, 1.f, 2.8, 2.2 }, // lich fire
+	{ 1.f, 0.7, 1.3, 1.3, 1.3, 1.f, 1.f }, // insectoid
+	{ 0.7, 0.8, 0.7, 1.1, 1.3, 1.6, 1.f }, // goatman
+	{ 1.f, 1.4, 1.4, 1.f, 0.5, 1.2, 0.8 }, // automaton
+	{ 1.5, 1.5, 1.5, 1.5, 2.2, 0.9, 1.9 }, // lich ice
+	{ 1.8, 1.8, 1.8, 1.8, 1.f, 2.5, 1.7 }, // lich fire
 	{ 1.f, 1.f, 1.f, 1.f, 0.5, 0.5, 1.f }, // sentrybot
 	{ 1.f, 1.f, 1.f, 1.f, 0.5, 0.5, 1.f }, // sentrybot
 	{ 1.f, 1.f, 1.f, 1.f, 0.5, 0.5, 1.f }, // gyrobot
@@ -475,7 +475,7 @@ static std::vector<std::vector<unsigned int>> classStatGrowth =
 {
 	// stat weightings for classes on level up
 	//	STR	DEX	CON	INT	PER	CHR -- sum is approx 24.
-	{	6,	5,	2,	2,	4,	5 }, // BARB 0
+	{	5,	5,	4,	1,	1,	2 }, // BARB 0
 	{	7,	2,	6,	1,	2,	6 }, // WARRIOR 1
 	{	3,	3,	4,	6,	5,	3 }, // HEALER 2
 	{	2,	7,	1,	2,	7,	5 }, // ROGUE 3
@@ -486,7 +486,7 @@ static std::vector<std::vector<unsigned int>> classStatGrowth =
 	{	2,	6,	2,	6,	6,	2 }, // ARCANIST 8
 	{	4,	4,	4,	4,	4,	4 }, // JOKER 9
 	{	4,	4,	2,	4,	2,	2 }, // SEXTON 10
-	{	5,	5,	3,	2,	2,	1 }, // NINJA 11
+	{	6,	6,	2,	2,	6,	2 }, // NINJA 11
 	{	4,	2,	5,	3,	2,	2 }, // MONK 12
 	{	3,	2,	4,	6,	4,	4 }, // CONJURER 13
 	{	3,	3,	1,	6,	6,	3 }, // ACCURSED 14
@@ -757,6 +757,7 @@ void incubusDie(Entity* my);
 void insectoidDie(Entity* my);
 void goatmanDie(Entity* my);
 void lichFireDie(Entity* my);
+void lichFireCloneDie(Entity* my);
 void lichIceDie(Entity* my);
 void sentryBotDie(Entity* my);
 void gyroBotDie(Entity* my);
