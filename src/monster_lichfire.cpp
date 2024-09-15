@@ -948,11 +948,11 @@ void lichFireAnimate(Entity* my, Stat* myStats, double dist)
 						if ( multiplayer != CLIENT )
 						{
 							//my->castOrbitingMagicMissile(SPELL_FIREBALL, 16.0, 0.0);
-							if ( local_rng.rand() % 2 )
+							if (local_rng.rand() % 2)
 							{
-								if ( my->monsterLichAllyStatus == LICH_ALLY_DEAD
+								if (my->monsterLichAllyStatus == LICH_ALLY_DEAD
 									&& !myStats->EFFECTS[EFF_VAMPIRICAURA]
-									&& my->monsterState != MONSTER_STATE_LICH_CASTSPELLS )
+									&& my->monsterState != MONSTER_STATE_LICH_CASTSPELLS)
 								{
 									createParticleDropRising(my, 600, 0.7);
 									serverSpawnMiscParticles(my, PARTICLE_EFFECT_VAMPIRIC_AURA, 600);
