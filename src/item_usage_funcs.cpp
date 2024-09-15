@@ -1936,9 +1936,15 @@ bool item_PotionHealing(Item*& item, Entity* entity, Entity* usedBy, bool should
 	}
 
 	//Bonus from CON, to scale up healing potions as the game progresses.
-	if ( statGetCON(stats, entity) > 0 )
+	if ( statGetCON(stats, entity) > 0) 
 	{
 		amount += 2 * statGetCON(stats, entity);
+	}
+
+	if (stats->ring != nullptr && stats->ring->type == RING_RAGE && stats->EFFECTS[EFF_POTION_STR]) //fskin note: healing potions are nerfed during rage
+	{
+		amount -= 2 * statGetCON(stats, entity); //fskin note: remove con bonus for rage since rage adds con
+		amount *= 0.25;
 	}
 
 	if ( item->beatitude < 0 )
@@ -2087,6 +2093,12 @@ bool item_PotionExtraHealing(Item*& item, Entity* entity, Entity* usedBy, bool s
 	if ( statGetCON(stats, entity) > 0 )
 	{
 		amount += 4 * statGetCON(stats, entity);
+	}
+
+	if (stats->ring != nullptr && stats->ring->type == RING_RAGE && stats->EFFECTS[EFF_POTION_STR]) //fskin note: healing potions are nerfed during rage
+	{
+		amount -= 4 * statGetCON(stats, entity); //fskin note: remove con bonus for rage since rage adds con
+		amount *= 0.4;
 	}
 
 	if ( item->beatitude < 0 )
@@ -2767,6 +2779,11 @@ void item_ScrollEnchantArmor(Item* item, int player)
 	int startIndex = tryIndex;
 	int armornum = 0;
 	bool breakloop = false;
+
+	if (stats[player]->helmet)
+	{
+		int tryIndex = 1;
+	}
 
 	// curse random item.
 	while ( !armor && !breakloop )
