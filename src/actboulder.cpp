@@ -238,7 +238,7 @@ int boulderCheckAgainstEntity(Entity* my, Entity* entity, bool ignoreInsideEntit
 				if ( my->sprite == BOULDER_LAVA_SPRITE
 					|| my->sprite == BOULDER_ARCANE_SPRITE )
 				{
-					damage = 50;
+					damage = 250; //fskin note: bapho boulders are super deadly now
 				}
 
 				int trapResist = entity->getFollowerBonusTrapResist();
