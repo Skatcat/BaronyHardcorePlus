@@ -2677,11 +2677,11 @@ void actMonster(Entity* my)
 					//messagePlayer(0, "DEAD");
 					my->monsterLichAllyStatus = LICH_ALLY_DEAD;
 					my->monsterLichAllyUID = 0;
-					for ( int c = 0; c < MAXPLAYERS; c++ )
-					{
-						playSoundPlayer(c, 391, 128);
-						messagePlayerColor(c, MESSAGE_WORLD, uint32ColorOrange, Language::get(2649));
-					}
+					//for ( int c = 0; c < MAXPLAYERS; c++ )
+					//{
+					//	playSoundPlayer(c, 391, 128);
+					//	messagePlayerColor(c, MESSAGE_WORLD, uint32ColorOrange, Language::get(2649));
+					//} //fskin note: disable this and add our elaborate dummy rat setup to map instead to avoid multiple messages due to Orpheus' Clones
 				}
 				else if ( lichAlly && my->monsterLichAllyUID == 0 )
 				{
@@ -4109,6 +4109,111 @@ void actMonster(Entity* my)
 		}
 	}
 
+	//fskin note: CHR buffs for followers
+	if (myStats &&
+		myStats->leader_uid != 0
+		&& !isIllusionTaunt
+		&& !monsterIsImmobileTurret(my, myStats)
+		&& !MonsterData_t::nameMatchesSpecialNPCName(*myStats, "skeleton knight")
+		&& !MonsterData_t::nameMatchesSpecialNPCName(*myStats, "skeleton sentinel"))
+	{
+		Entity* leader = uidToEntity(myStats->leader_uid);
+		if (leader && leader->behavior == &actPlayer)
+		{
+			if ((leader->getStats()->MAXHP) * 3 >= myStats->MAXHP && leader->getStats()->HP > (leader->getStats()->MAXHP)/4)
+			{
+				if (leader->getStats()->CHR <= 30)
+				{
+					if (my->monsterState == MONSTER_STATE_ATTACK) // increased regen during battle
+					{
+						if (myStats->HP < myStats->MAXHP && ticks % 20 == 0)
+						{
+							//myStats->HP += ((leader->getStats()->CHR) / 20) * (1 + ((myStats->MAXHP) / 100)) * ((2 - (myStats->MAXHP) / (2000 - (leader->getStats()->CHR)*10))); // some outdated calculation
+							myStats->HP += leader->getStats()->CHR / 30 + leader->getStats()->getProficiency(PRO_LEADERSHIP) / 40;
+							if (myStats->HP > myStats->MAXHP)
+							{
+								myStats->HP -= myStats->HP - myStats->MAXHP;
+							}
+						}
+					}
+					else if (my->monsterState != MONSTER_STATE_ATTACK)
+					{
+						if (myStats->HP < myStats->MAXHP && ticks % 50 == 0)
+						{
+							myStats->HP += leader->getStats()->CHR / 50 + leader->getStats()->getProficiency(PRO_LEADERSHIP) / 50;
+							if (myStats->HP > myStats->MAXHP)
+							{
+								myStats->HP -= myStats->HP - myStats->MAXHP;
+							}
+						}
+					}
+				}
+				else if (leader->getStats()->CHR > 30 && leader->getStats()->CHR <= 70) // we use multiple maxHP dependent formulas so weak followers regenerate quicker than strong followers at some point. probably possible to do this in one formula but I couldn't find a suitable one
+				{
+					if (my->monsterState == MONSTER_STATE_ATTACK)
+					{
+						if (myStats->HP < myStats->MAXHP && ticks % 20 == 0)
+						{
+							myStats->HP += (leader->getStats()->CHR / 15 + leader->getStats()->getProficiency(PRO_LEADERSHIP) / 20);
+							if (myStats->HP > myStats->MAXHP)
+							{
+								myStats->HP -= myStats->HP - myStats->MAXHP;
+							}
+						}
+					}
+					else if (my->monsterState != MONSTER_STATE_ATTACK)
+					{
+						if (myStats->HP < myStats->MAXHP && ticks % 50 == 0)
+						{
+							myStats->HP += leader->getStats()->CHR / 10 + leader->getStats()->getProficiency(PRO_LEADERSHIP) / 15;
+							if (myStats->HP > myStats->MAXHP)
+							{
+								myStats->HP -= myStats->HP - myStats->MAXHP;
+							}
+						}
+					}
+				}
+				else if (leader->getStats()->CHR > 70)
+				{
+					if (my->monsterState == MONSTER_STATE_ATTACK)
+					{
+						if (myStats->HP < myStats->MAXHP && ticks % 20 == 0)
+						{
+							myStats->HP += (leader->getStats()->CHR / 4 + leader->getStats()->getProficiency(PRO_LEADERSHIP) / 8);
+							if (myStats->HP > myStats->MAXHP)
+							{
+								myStats->HP -= myStats->HP - myStats->MAXHP;
+							}
+						}
+					}
+					else if (my->monsterState != MONSTER_STATE_ATTACK)
+					{
+						if (myStats->HP < myStats->MAXHP && ticks % 50 == 0)
+						{
+							myStats->HP += leader->getStats()->CHR / 10 + leader->getStats()->getProficiency(PRO_LEADERSHIP) / 15;
+							if (myStats->HP > myStats->MAXHP)
+							{
+								myStats->HP -= myStats->HP - myStats->MAXHP;
+							}
+						}
+					}
+				}
+
+				if (myStats->MAXHP < 100)
+				{
+					if (myStats->HP < myStats->MAXHP && ticks % 50 == 0)
+					{
+						myStats->HP += leader->getStats()->CHR / 50;
+						if (myStats->HP > myStats->MAXHP)
+						{
+							myStats->HP -= myStats->HP - myStats->MAXHP;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	if ( my->getUID() % TICKS_PER_SECOND == ticks % TICKS_PER_SECOND )
 	{
 		if ( myStats && myStats->leader_uid != 0 )
@@ -4598,6 +4703,11 @@ void actMonster(Entity* my)
 					|| myStats->type == LICH_ICE 
 					|| (myStats->type == CREATURE_IMP && strstr(map.name, "Boss") && !my->monsterAllyGetPlayerLeader())
 					|| (myStats->type == AUTOMATON && strstr(myStats->name, "corrupted automaton"))
+					|| (myStats->type == CREATURE_IMP && strstr(map.name, "The Haunted Castle") && !my->monsterAllyGetPlayerLeader())
+					|| (myStats->type == VAMPIRE && strstr(myStats->name, "vampire assassin") && !my->monsterAllyGetPlayerLeader())
+					|| (myStats->type == GOATMAN && strstr(myStats->name, "skytown deathbringer") && !my->monsterAllyGetPlayerLeader())
+					|| (myStats->type == GNOME && strstr(myStats->name, "The Jubster")) // fskin note: certain mobs chase us
+					|| (strstr(map.name, "Hell") && !my->monsterAllyGetPlayerLeader() && (currentlevel == 42 || currentlevel == 41))
 					|| (myStats->type == SHADOW && !strncmp(map.name, "Hell Boss", 9) && uidToEntity(my->parent) && uidToEntity(my->parent)->getRace() == DEVIL) )
 				{
 					double distToPlayer = 0;
@@ -5482,7 +5592,7 @@ timeToGoAgain:
 								if ( my->backupWithRangedWeapon(*myStats, dist, hasrangedweapon) || my->shouldRetreat(*myStats) )
 								{
 									// injured monsters or monsters with ranged weapons back up
-									if ( myStats->type == LICH_ICE )
+									if ( myStats->type == LICH_ICE || currentlevel == 42 )
 									{
 										double strafeTangent = tangent2;
 										//messagePlayer(0, "strafe: %d", my->monsterStrafeDirection);
@@ -5730,6 +5840,8 @@ timeToGoAgain:
 					// throw fireballs
 					my->yaw = my->yaw + MONSTER_WEAPONYAW;
 					castSpell(my->getUID(), &spell_fireball, true, false);
+					castSpell(my->getUID(), &spell_bleed, true, false);
+					castSpell(my->getUID(), &spell_poison, true, false);
 					my->yaw = my->yaw - MONSTER_WEAPONYAW;
 
 					// let's throw one specifically aimed at our players to be mean.
@@ -5738,7 +5850,9 @@ timeToGoAgain:
 						real_t oldYaw = my->yaw;
 						tangent = atan2(entity->y - my->y, entity->x - my->x);
 						my->yaw = tangent;
-						(void)castSpell(my->getUID(), &spell_fireball, true, false);
+						(void)castSpell(my->getUID(), &spell_fireball, true, false); //fskin note: bapho's projectiles are now 3 spells stacked on top of each other RIP
+						(void)castSpell(my->getUID(), &spell_bleed, true, false);
+						(void)castSpell(my->getUID(), &spell_poison, true, false);
 						for ( c = 0; c < MAXPLAYERS; ++c )
 						{
 							if ( players[c] && players[c]->entity && entity != players[c]->entity )
@@ -5757,6 +5871,8 @@ timeToGoAgain:
 								{
 									my->yaw = tangent;
                                     (void)castSpell(my->getUID(), &spell_fireball, true, false);
+									(void)castSpell(my->getUID(), &spell_bleed, true, false);
+									(void)castSpell(my->getUID(), &spell_poison, true, false);
 								}
 							}
 						}
@@ -6129,7 +6245,12 @@ timeToGoAgain:
 				|| (myStats->type == LICH && my->monsterSpecialTimer <= 0)
 				|| ((myStats->type == LICH_FIRE || myStats->type == LICH_ICE) && my->monsterSpecialTimer <= 0 )
 				|| (myStats->type == CREATURE_IMP && strstr(map.name, "Boss") && !my->monsterAllyGetPlayerLeader())
-				|| (myStats->type == AUTOMATON && strstr(myStats->name, "corrupted automaton")) )
+				|| (myStats->type == CREATURE_IMP && strstr(map.name, "The Haunted Castle") && !my->monsterAllyGetPlayerLeader())
+				|| (myStats->type == AUTOMATON && strstr(myStats->name, "corrupted automaton"))
+				|| (myStats->type == VAMPIRE && strstr(myStats->name, "vampire assassin") && !my->monsterAllyGetPlayerLeader())
+				|| (myStats->type == GOATMAN && strstr(myStats->name, "skytown deathbringer") && !my->monsterAllyGetPlayerLeader())
+				|| (strstr(map.name, "Hell") && !my->monsterAllyGetPlayerLeader() && (currentlevel == 42 || currentlevel == 41))
+				|| (myStats->type == GNOME && strstr(myStats->name, "The Jubster"))) // fskin note: certain mobs chase us
 			{
 				bool shouldHuntPlayer = false;
 				Entity* playerOrNot = uidToEntity(my->monsterTarget);
@@ -8259,7 +8380,7 @@ timeToGoAgain:
 								else
 								{
 									Entity* spell = castSpell(my->getUID(), getSpellFromID(SPELL_MAGICMISSILE), true, false);
-									real_t horizontalSpeed = 4.0;
+									real_t horizontalSpeed = 8.0; // fskin note: missile speed doubled
 									Entity* target = uidToEntity(my->monsterTarget);
 									if ( target )
 									{
@@ -8728,7 +8849,7 @@ void Entity::handleMonsterAttack(Stat* myStats, Entity* target, double dist)
 				if ( hit.entity->behavior == &actMonster && !hasrangedweapon )
 				{
 					// alert the monster!
-					if ( hit.entity->skill[0] != MONSTER_STATE_ATTACK )
+					if ( hit.entity->skill[0] != MONSTER_STATE_ATTACK && currentlevel != 42 && currentlevel != 43) // fskin note: little hack to make monsters not aggro on each other on floor 42
 					{
 						hit.entity->monsterAcquireAttackTarget(*this, MONSTER_STATE_PATH);
 					}
