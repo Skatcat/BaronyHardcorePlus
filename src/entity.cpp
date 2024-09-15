@@ -1197,6 +1197,14 @@ void Entity::effectTimes()
 					messagePlayer(player, MESSAGE_STATUS, Language::get(3475));
 				}
 			}
+			else if (c == EFF_LEVITATING) //fskin note: levitation warning
+			{
+				if (myStats->EFFECTS_TIMERS[c] == TICKS_PER_SECOND * 10)
+				{
+					playSoundPlayer(player, 611, 192);
+					messagePlayer(player, MESSAGE_STATUS, Language::get(3474));
+				}
+			}
 			if ( myStats->EFFECTS_TIMERS[c] == 0 )
 			{
 				myStats->EFFECTS[c] = false;
@@ -4756,51 +4764,68 @@ void Entity::handleEffects(Stat* myStats)
 
 	// vanguard //fskin note: new shield legendary bonus effect implementation
 
-	bool critrange;
-	critrange = false;
-	bool overrange;
-	overrange = false;
-
-	if (myStats->getModifiedProficiency(PRO_SHIELD) == 100
-		&& myStats->HP > ((myStats->MAXHP) / 3)
-		&& myStats->MP > ((myStats->MAXMP) / 3)
-		&& critrange == false)
+	if (myStats->getModifiedProficiency(PRO_SHIELD) == 100)
 	{
-		myStats->EFFECTS[EFF_VANGUARD] = true;
-		myStats->EFFECTS[EFF_VANGUARD_CRITICAL] = false;
-	} // vanguard full power
+		bool critrange;
+		critrange = false;
+		bool overrange;
+		overrange = false;
 
-	if (myStats->getModifiedProficiency(PRO_SHIELD) < 100
-		|| myStats->HP < ((myStats->MAXHP) / 3)
-		|| myStats->MP < ((myStats->MAXMP) / 3))
-	{
-		myStats->EFFECTS[EFF_VANGUARD] = false;
-		myStats->EFFECTS[EFF_VANGUARD_CRITICAL] = false;
-	} // vanguard broken
+		if (
+			myStats->HP > ((myStats->MAXHP) / 3)
+			&& myStats->MP > ((myStats->MAXMP) / 3)
+			&& critrange == false)
+		{
+			myStats->EFFECTS[EFF_VANGUARD] = true;
+			myStats->EFFECTS[EFF_VANGUARD_CRITICAL] = false;
+		} // vanguard full power
 
-	if ((myStats->HP < (myStats->MAXHP) / 2)
-		&& (myStats->HP > (myStats->MAXHP) / 3)
-		||
-		(myStats->MP < (myStats->MAXMP) / 2)
-		&& (myStats->MP > (myStats->MAXMP) / 3))
-	{
-		critrange = true;
+		if (myStats->HP < ((myStats->MAXHP) / 3)
+			|| myStats->MP < ((myStats->MAXMP) / 3))
+		{
+			myStats->EFFECTS[EFF_VANGUARD] = false;
+			myStats->EFFECTS[EFF_VANGUARD_CRITICAL] = false;
+		} // vanguard broken
+
+		if ((myStats->HP < (myStats->MAXHP) / 2)
+			&& (myStats->HP > (myStats->MAXHP) / 3)
+			||
+			(myStats->MP < (myStats->MAXMP) / 2)
+			&& (myStats->MP > (myStats->MAXMP) / 3))
+		{
+			critrange = true;
+		}
+
+		if ((myStats->HP > (myStats->MAXHP) / 3)
+			&&
+			(myStats->MP > (myStats->MAXMP) / 3))
+		{
+			overrange = true;
+		}
+
+		if (
+			critrange == true
+			&& overrange == true)
+		{
+			myStats->EFFECTS[EFF_VANGUARD] = false;
+			myStats->EFFECTS[EFF_VANGUARD_CRITICAL] = true;
+		} // vanguard critical
 	}
 
-	if ((myStats->HP > (myStats->MAXHP) / 3)
-		&&
-		(myStats->MP > (myStats->MAXMP) / 3))
+	// fskin note: ring of rage
+	if (myStats->ring != NULL)
 	{
-		overrange = true;
+		if (myStats->ring->type == RING_RAGE && myStats->EFFECTS[EFF_POTION_STR] && (myStats->HP > myStats->MAXHP/8))
+		{
+			if (ticks % 60 == 0)
+			{
+				if (local_rng.rand() % 25)
+				{
+					this->modHP(-((myStats->MAXHP)/30));
+				}
+			}
+		}
 	}
-
-	if (myStats->getModifiedProficiency(PRO_SHIELD) == 100
-		&& critrange == true
-		&& overrange == true)
-	{
-		myStats->EFFECTS[EFF_VANGUARD] = false;
-		myStats->EFFECTS[EFF_VANGUARD_CRITICAL] = true;
-	} // vanguard critical
 
 	// amulet effects
 	if ( myStats->amulet != NULL )
@@ -5100,6 +5125,36 @@ void Entity::handleEffects(Stat* myStats)
 		if ( cured )
 		{
 			playSoundEntity(this, 168, 128);
+		}
+	}
+
+	bool freeSharur = false; //fskin note: new sharur bonus: lets you snap out of sleep and fear
+
+	if (player >= 0
+		&& myStats->weapon != nullptr
+		&& ticks % 45 == 0
+		&& myStats->weapon->type == ARTIFACT_MACE &&
+		(myStats->EFFECTS[EFF_ASLEEP] || myStats->EFFECTS[EFF_FEAR]))
+	{
+		freeSharur = true;
+	}
+
+	if (freeSharur)
+	{
+		bool cured = false;
+		if (myStats->EFFECTS_TIMERS[EFF_ASLEEP] > 0)
+		{
+			cured = true;
+			myStats->EFFECTS_TIMERS[EFF_ASLEEP] = 1; // tick over to 0 and dissipate on the next check, and play the appropriate message.
+		}
+		if (myStats->EFFECTS_TIMERS[EFF_FEAR] > 0)
+		{
+			cured = true;
+			myStats->EFFECTS_TIMERS[EFF_FEAR] = 1; // tick over to 0 and dissipate on the next check, and play the appropriate message.
+		}
+		if (cured)
+		{
+			messagePlayer(player, MESSAGE_STATUS, Language::get(438));
 		}
 	}
 
@@ -5520,10 +5575,23 @@ Sint32 statGetSTR(Stat* entitystats, Entity* my)
 			STR += (std::max(5, STR / 4));
 		}
 	}
-	if ( entitystats->EFFECTS[EFF_POTION_STR] )
+
+	if (entitystats->EFFECTS[EFF_POTION_STR])
 	{
 		STR += (std::max(5, STR / 4));
 	}
+
+	if (entitystats->ring != nullptr) //fskin note: ring of rage bonus
+	{
+		if (entitystats->EFFECTS[EFF_POTION_STR])
+		{
+			if (entitystats->ring->type == RING_RAGE)
+			{
+				STR += (std::max(7, STR / 3)) + (entitystats->LVL)/2;
+			}
+		}
+	}
+
 	if ( entitystats->EFFECTS[EFF_DRUNK] )
 	{
 		switch ( entitystats->type )
@@ -5812,7 +5880,7 @@ Sint32 statGetCON(Stat* entitystats, Entity* my)
 {
 	Sint32 CON;
 
-	if ( !entitystats )
+	if (!entitystats)
 	{
 		return 0;
 	}
@@ -5821,26 +5889,26 @@ Sint32 statGetCON(Stat* entitystats, Entity* my)
 
 	bool cursedItemIsBuff = false;
 	bool shapeshifted = false;
-	if ( my && my->behavior == &actPlayer )
+	if (my && my->behavior == &actPlayer)
 	{
 		cursedItemIsBuff = shouldInvertEquipmentBeatitude(entitystats);
-		if ( my->effectShapeshift != NOTHING )
+		if (my->effectShapeshift != NOTHING)
 		{
 			shapeshifted = true;
-			if ( my->effectShapeshift == SPIDER )
+			if (my->effectShapeshift == SPIDER)
 			{
 				int bonusCON = 3;
 				CON += bonusCON;
-				if ( CON >= 0 )
+				if (CON >= 0)
 				{
 					CON *= 1.25;
 				}
 			}
-			else if ( my->effectShapeshift == TROLL )
+			else if (my->effectShapeshift == TROLL)
 			{
 				int bonusCON = 5;
 				CON += bonusCON;
-				if ( CON >= 0 )
+				if (CON >= 0)
 				{
 					CON *= 1.33;
 				}
@@ -5848,15 +5916,23 @@ Sint32 statGetCON(Stat* entitystats, Entity* my)
 		}
 	}
 
-	if ( entitystats->ring != nullptr )
+	if (entitystats->ring != nullptr)
 	{
-		if ( entitystats->ring->type == RING_CONSTITUTION )
+		if (entitystats->ring->type == RING_CONSTITUTION)
 		{
-			if ( entitystats->ring->beatitude >= 0 || cursedItemIsBuff )
+			if (entitystats->ring->beatitude >= 0 || cursedItemIsBuff)
 			{
 				CON++;
 			}
 			CON += (cursedItemIsBuff ? abs(entitystats->ring->beatitude) : entitystats->ring->beatitude);
+		}
+	}
+	if (entitystats->ring != nullptr) //fskin note: ring of rage bonus
+	{
+		if (entitystats->EFFECTS[EFF_POTION_STR] && entitystats->ring->type == RING_RAGE)
+		{
+				//CON += std::max(4, static_cast<int>(CON * (1+((200 - CON) / 200))));
+				CON *= 1.5;
 		}
 	}
 	if ( entitystats->helmet != nullptr )
@@ -7385,7 +7461,14 @@ void Entity::attack(int pose, int charge, Entity* target)
 					}
 					else
 					{
-						speed = 5.f + normalisedCharge;
+						if (myStats->EFFECTS[EFF_POTION_STR])
+						{
+							speed = 10.f + normalisedCharge;
+						}
+						else
+						{
+							speed = 6.f + normalisedCharge;
+						}
 					}
 
 					// thrown items have slightly faster velocities
@@ -7736,7 +7819,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 			{
 				previousMonsterState = hit.entity->monsterState;
 				hitstats = hit.entity->getStats();
-				if ( hitstats )
+				if ( hitstats && currentlevel != 42 && currentlevel != 43) // fskin note: little hack to make monsters not aggro on each other on floor 42
 				{
 					bool alertTarget = true;
 					if ( behavior == &actMonster && monsterAllyIndex != -1 && hit.entity->monsterAllyIndex != -1 )
@@ -8323,7 +8406,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 					}
 					else if ( player >= 0 && pose == PLAYER_POSE_GOLEM_SMASH )
 					{
-						damagePreMultiplier = 2;
+						damagePreMultiplier = 2 + (myStats->getModifiedProficiency(PRO_UNARMED)/20); //fskin note: strike has additional scaling depending on unarmed skill
 					}
 
 					int myAttack = std::max(0, (Entity::getAttack(this, myStats, behavior == &actPlayer) * damagePreMultiplier) + getBonusAttackOnTarget(*hitstats));
@@ -8512,6 +8595,24 @@ void Entity::attack(int pose, int charge, Entity* target)
 							{
 								damage = std::min(damage, 30);
 							}
+						}
+					}
+
+					if (myStats->EFFECTS[EFF_DASH]) //fskin note: dash damage bonus
+					{
+						if (backstab && myStats->getProficiency(PRO_STEALTH) >= 60)
+						{
+							damage *= 3 + myStats->DEX/100;
+							if (charge >= MAXCHARGE/3)
+							{
+								damage *= 1.1;
+								hit.entity->setEffect(EFF_ROOTED, true, 100, true);
+								hit.entity->setEffect(EFF_SLOW, true, 200, true);
+							}
+						}
+						else
+						{
+							damage *= 1.5;
 						}
 					}
 
@@ -9376,6 +9477,64 @@ void Entity::attack(int pose, int charge, Entity* target)
 									swordExtraDamageInflicted = true;
 									int extraDamage = 5;
 									hit.entity->modHP(-(extraDamage + capstoneDamage)); // do the damage
+								}
+							}
+						}
+					}
+
+					// fskin note: cause fear dependent on CHR - specific enemy interactions are hardcoded instead of using enemy CHR for the calculation.
+					// this is because giving every enemy on every map and for every tileset of the monstercurve appropriate CHR stats would be incredibly annoying work.
+					if (damage > 0 && behavior == &actPlayer && (charge >= MAXCHARGE - 3))
+					{
+						if (myStats->CHR > 0)
+						{
+
+							if (((hitstats->type == RAT && hitstats->MAXHP < myStats->CHR * 9)
+								|| (hitstats->type == SKELETON && hitstats->MAXHP < myStats->CHR * 10)
+								|| (hitstats->type == SPIDER && hitstats->MAXHP < myStats->CHR * 11)
+								|| (hitstats->type == GNOME && hitstats->MAXHP < myStats->CHR * 12)
+								|| (hitstats->type == TROLL && hitstats->MAXHP < myStats->CHR * 11)
+								|| (hitstats->type == GHOUL && hitstats->MAXHP < myStats->CHR * 8)
+								|| (hitstats->type == SLIME && hitstats->MAXHP < myStats->CHR * 8)
+								|| (hitstats->type == GOBLIN && hitstats->MAXHP < myStats->CHR * 7.5)
+								|| (hitstats->type == SCARAB && hitstats->MAXHP < myStats->CHR * 7)
+								|| (hitstats->type == SCORPION && hitstats->MAXHP < myStats->CHR * 7)
+								|| (hitstats->type == INSECTOID && hitstats->MAXHP < myStats->CHR * 9)
+								|| (hitstats->type == CREATURE_IMP && hitstats->MAXHP < myStats->CHR * 7)
+								|| (hitstats->type == DEMON && hitstats->MAXHP < myStats->CHR * 8)
+								|| (hitstats->type == AUTOMATON && hitstats->MAXHP < myStats->CHR * 7)
+								|| (hitstats->type == VAMPIRE && hitstats->MAXHP < myStats->CHR * 9)
+								|| (hitstats->type == GOATMAN && hitstats->MAXHP < myStats->CHR * 9)
+								|| (hitstats->type == SUCCUBUS && hitstats->MAXHP < myStats->CHR * 10)
+								|| (hitstats->type == INCUBUS && hitstats->MAXHP < myStats->CHR * 10)
+								|| (hitstats->type == KOBOLD && hitstats->MAXHP < myStats->CHR * 10)
+								|| (hitstats->type == COCKATRICE && hitstats->MAXHP < myStats->CHR * 13 && hitstats->HP < hitstats->MAXHP / 4)
+								|| (hitstats->type == CRYSTALGOLEM && hitstats->MAXHP < myStats->CHR * 6)
+								) || (currentlevel > 35 && myStats->CHR > currentlevel * 2)
+								|| (currentlevel > 10 && currentlevel < 35 && myStats->CHR > currentlevel * 3)
+								|| (currentlevel >= 10 && currentlevel <= 24 && myStats->CHR > currentlevel * 2.7))
+							{
+								{
+									//int duration = myStats->CHR * 2.6 - ((hitstats->CHR * (hitstats->HP / hitstats->MAXHP)) + damage*0.8);
+									int duration = (myStats->CHR * 2) + damage * 0.5;
+									if (duration >= 100)
+									{
+										duration = 100;
+									}
+									if (myStats->MAXHP >= hitstats->MAXHP * 2)
+									{
+										duration += myStats->CHR;
+									}
+									if (backstab)
+									{
+										duration += myStats->getProficiency(PRO_STEALTH);
+									}
+
+									if (hitstats->HP > 0 && !hitstats->EFFECTS[EFF_FEAR] && !hitstats->EFFECTS[EFF_WITHDRAWAL])
+									{
+										hit.entity->setEffect(EFF_FEAR, true, duration, true);
+										hit.entity->setEffect(EFF_WITHDRAWAL, true, 500, true);
+									}
 								}
 							}
 						}
@@ -10702,7 +10861,14 @@ void Entity::attack(int pose, int charge, Entity* target)
 					{
 						if ( behavior == &actPlayer )
 						{
-							if ( myStats->weapon == nullptr || shapeshifted )
+							if (myStats->ring != NULL && myStats->ring->type == RING_RAGE && myStats->EFFECTS[EFF_POTION_STR]) //fskin note: ring of rage lifesteal
+							{
+								if (hitstats->HP <= 0)
+								{
+									forceLifesteal = true;
+								}
+							}
+							else if ( myStats->weapon == nullptr || shapeshifted )
 							{
 								if ( myStats->EFFECTS_TIMERS[EFF_VAMPIRICAURA] == -2 )
 								{
@@ -11989,48 +12155,63 @@ void Entity::awardXP(Entity* src, bool share, bool root)
 								continue;
 							}
 							Stat* followerStats = follower->getStats();
-							if ( followerStats )
+
+							if (followerStats)
 							{
+
 								int inspiration = follower->getEntityInspirationFromAllies();
 								real_t inspirationMult = (1.0 + (inspiration / 100.0));
 
 								//int xpDivide = std::min(std::max(1, numFollowers), 4); // 1 - 4 depending on followers.
-								if ( follower->monsterAllySummonRank != 0 && numshares > 0 )
+								if (follower->monsterAllySummonRank != 0 && numshares > 0)
 								{
 									int gain = (xpGain * numshares); // summoned monsters aren't penalised XP.
-									if ( inspiration )
+									if (inspiration)
 									{
 										gain *= inspirationMult;
-										if ( ((followerStats->EXP + gain) >= 100) && ((followerStats->EXP + (xpGain * numshares)) < 100) )
+										if (((followerStats->EXP + gain) >= 100) && ((followerStats->EXP + (xpGain * numshares)) < 100))
 										{
 											// inspiration caused us to level
 											steamAchievementEntity(this, "BARONY_ACH_BY_EXAMPLE");
 										}
 									}
-									followerStats->EXP += gain; 
+									if ((MonsterData_t::nameMatchesSpecialNPCName(*followerStats, "skeleton knight") || (MonsterData_t::nameMatchesSpecialNPCName(*followerStats, "skeleton sentinel"))))
+									{
+										followerStats->EXP += gain * 1.6; //fskin note: conjured skeletons have an 1.6 XP modifier
+									}
+									else
+									{
+										followerStats->EXP += gain;
+									}
 								}
 								else
 								{
 									int gain = xpGain;
-									if ( inspiration )
+									if (inspiration)
 									{
 										gain *= inspirationMult;
-										if ( ((followerStats->EXP + gain) >= 100) && ((followerStats->EXP + xpGain) < 100) )
+										if (((followerStats->EXP + gain) >= 100) && ((followerStats->EXP + xpGain) < 100))
 										{
 											// inspiration caused us to level
 											steamAchievementEntity(this, "BARONY_ACH_BY_EXAMPLE");
 										}
 									}
-									followerStats->EXP += gain;
+									if ((MonsterData_t::nameMatchesSpecialNPCName(*followerStats, "skeleton knight") || (MonsterData_t::nameMatchesSpecialNPCName(*followerStats, "skeleton sentinel"))))
+									{
+										followerStats->EXP += gain * 1.6; //fskin note: conjured skeletons have an 1.6 XP modifier
+									}
+									else
+									{
+										followerStats->EXP += gain;
+									}
 								}
-								//messagePlayer(0, "monster got %d xp", xpGain);
+								}
 							}
-						}
+								//messagePlayer(0, "monster got %d xp", xpGain);
 					}
 				}
 			}
 		}
-		
 	}
 
 	// award XP to main victor
@@ -18242,9 +18423,9 @@ int Entity::getManaRegenInterval(Entity* my, Stat& myStats, bool isPlayer)
 		myStats.EFFECTS[EFF_MP_REGEN] = oldRegen;
 	}
 
-	if ( manaring > 3 )
+	if ( manaring > 5 ) //fskin note: max mana regen increased
 	{
-		manaring = 3;
+		manaring = 5;
 	}
 
 	if ( isPlayer && myStats.type == AUTOMATON && myStats.HUNGER <= 300 )
@@ -18506,7 +18687,8 @@ void Entity::setRangedProjectileAttack(Entity& marksman, Stat& myStats, int opti
 		if ( myStats.weapon->type != SLING )
 		{
 			// get armor pierce chance.
-			int statChance = std::min(std::max(marksman.getPER() / 2, 0), 50); // 0 to 50 value.
+			//int statChance = std::min(std::max(marksman.getPER() / 2, 0), 50); // 0 to 50 value.
+			int statChance = std::min(std::max(marksman.getPER(), 0), 100); // fskin note: 0 to 100 value.
 			if ( myStats.weapon->type == HEAVY_CROSSBOW )
 			{
 				statChance += 50;
@@ -18612,6 +18794,9 @@ void Entity::setRangedProjectileAttack(Entity& marksman, Stat& myStats, int opti
 				break;
 			case QUIVER_HUNTING:
 				sprite = 930;
+				break;
+			case QUIVER_ARCANE:
+				sprite = 1326;
 				break;
 			default:
 				break;
