@@ -428,6 +428,20 @@ Entity* castSpell(Uint32 caster_uid, spell_t* spell, bool using_magicstaff, bool
 			return NULL;
 		}*/
 		int prevHP = caster->getHP();
+		int sharurbonus = 0;
+
+		if (stat->weapon && stat->weapon->type == ARTIFACT_MACE ) //fskin note: new sharur bonus: spell cost
+		{
+			if (getCostOfSpell(spell, caster) <= 5)
+			{
+				sharurbonus = getCostOfSpell(spell, caster);
+			}
+			else
+			{
+				sharurbonus = (getCostOfSpell(spell, caster))/2;
+			}
+		}
+
 		if ( multiplayer == SINGLE )
 		{
 			if ( spell->ID == SPELL_FORCEBOLT && skillCapstoneUnlocked(player, PRO_SPELLCASTING) )
@@ -436,7 +450,7 @@ Entity* castSpell(Uint32 caster_uid, spell_t* spell, bool using_magicstaff, bool
 			}
 			else
 			{
-				magiccost = cast_animation[player].mana_left;
+				magiccost = cast_animation[player].mana_left - sharurbonus;
 			}
 			caster->drainMP(magiccost, false);
 		}
@@ -449,7 +463,7 @@ Entity* castSpell(Uint32 caster_uid, spell_t* spell, bool using_magicstaff, bool
 			}
 			else
 			{
-				magiccost = getCostOfSpell(spell, caster);
+				magiccost = getCostOfSpell(spell, caster) - sharurbonus;
 				if ( magiccost > stat->MP )
 				{
 					// damage sound/effect due to overdraw.
