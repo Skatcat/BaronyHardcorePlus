@@ -1786,7 +1786,7 @@ void ItemTooltips_t::readTooltipsFromFile(bool forceLoadBaseDirectory)
 
 std::string& ItemTooltips_t::getItemStatusAdjective(Uint32 itemType, Status status)
 {
-	if ( itemType >= ARTIFACT_ORB_BLUE && itemType <= ARTIFACT_ORB_GREEN )
+	if ( itemType >= ARTIFACT_ORB_BLUE && itemType <= ARTIFACT_ORB_GREEN)
 	{
 		if ( adjectives.find("jewelry_status") == adjectives.end() )
 		{
