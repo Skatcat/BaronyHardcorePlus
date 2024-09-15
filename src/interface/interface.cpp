@@ -9200,6 +9200,7 @@ bool GenericGUIMenu::tinkeringGetItemValue(const Item* item, int* metal, int* ma
 		case RING_INVISIBILITY:
 		case RING_LEVITATION:
 		case RING_REGENERATION:
+		case RING_RAGE:
 		case GEM_DIAMOND:
 		case TOOL_SKELETONKEY:
 		case VAMPIRE_DOUBLET:
