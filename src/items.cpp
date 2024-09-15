@@ -631,7 +631,7 @@ char* Item::description() const
 		}
 		else
 		{
-			if ( type >= ARTIFACT_ORB_BLUE && type <= ARTIFACT_ORB_GREEN )
+			if ( type >= ARTIFACT_ORB_BLUE && type <= ARTIFACT_ORB_GREEN)
 			{
 				snprintf(tempstr, 1024, Language::get(1023 + status), count, beatitude);
 			}
@@ -781,7 +781,7 @@ char* Item::description() const
 		}
 		else
 		{
-			if ( type >= ARTIFACT_ORB_BLUE && type <= ARTIFACT_ORB_GREEN )
+			if ( type >= ARTIFACT_ORB_BLUE && type <= ARTIFACT_ORB_GREEN)
 			{
 				snprintf(tempstr, 1024, Language::get(1065 + status), count);
 			}
@@ -1438,7 +1438,7 @@ Entity* dropItemMonster(Item* const item, Entity* const monster, Stat* const mon
 		if ( item->appearance == MONSTER_ITEM_UNDROPPABLE_APPEARANCE )
 		{
 			if ( monster->behavior == &actMonster
-				&& (item->type < ARTIFACT_ORB_BLUE || item->type > ARTIFACT_ORB_GREEN) )
+				&& (item->type < ARTIFACT_ORB_BLUE || item->type > ARTIFACT_ORB_GREEN))
 			{
 				// default no monster drops these if appearance is set
 				itemDroppable = false;
@@ -1745,7 +1745,11 @@ EquipItemResult equipItem(Item* const item, Item** const slot, const int player,
 				{
 					if ( players[player]->isLocalPlayer() )
 					{
-						if ( shouldInvertEquipmentBeatitude(stats[player]) && (*slot)->beatitude > 0 )
+						if ((*slot)->type == RING_RAGE) //fskin note: message for ring of rage unequip
+						{
+							messagePlayer(player, MESSAGE_EQUIPMENT, Language::get(3199), (*slot)->getName());
+						}
+						else if ( shouldInvertEquipmentBeatitude(stats[player]) && (*slot)->beatitude > 0 )
 						{
 							messagePlayer(player, MESSAGE_EQUIPMENT, Language::get(3217), (*slot)->getName());
 						}
@@ -1853,7 +1857,11 @@ EquipItemResult equipItem(Item* const item, Item** const slot, const int player,
 				{
 					if ( players[player]->isLocalPlayer() )
 					{
-						if ( shouldInvertEquipmentBeatitude(stats[player]) && (*slot)->beatitude > 0 )
+						if ((*slot)->type == RING_RAGE) //fskin note: message for ring of rage unequip
+						{
+							messagePlayer(player, MESSAGE_EQUIPMENT, Language::get(3199), (*slot)->getName());
+						}
+						else if ( shouldInvertEquipmentBeatitude(stats[player]) && (*slot)->beatitude > 0 )
 						{
 							messagePlayer(player, MESSAGE_EQUIPMENT, Language::get(3217), (*slot)->getName());
 						}
@@ -2472,6 +2480,7 @@ void useItem(Item* item, const int player, Entity* usedBy, bool unequipForDroppi
 		case RING_LEVITATION:
 		case RING_REGENERATION:
 		case RING_TELEPORTATION:
+		case RING_RAGE:
 			equipItemResult = equipItem(item, &stats[player]->ring, player, checkInventorySpaceForPaperDoll);
 			break;
 		case SPELLBOOK_FORCEBOLT:
@@ -2584,6 +2593,7 @@ void useItem(Item* item, const int player, Entity* usedBy, bool unequipForDroppi
 		case QUIVER_KNOCKBACK:
 		case QUIVER_CRYSTAL:
 		case QUIVER_HUNTING:
+		case QUIVER_ARCANE:
 			equipItemResult = equipItem(item, &stats[player]->shield, player, checkInventorySpaceForPaperDoll);
 			break;
 		case TOOL_BLINDFOLD:
@@ -2921,6 +2931,9 @@ void useItem(Item* item, const int player, Entity* usedBy, bool unequipForDroppi
 				break;
 			case RING_STRENGTH:
 				messagePlayer(player, MESSAGE_HINT | MESSAGE_EQUIPMENT, Language::get(2388));
+				break;
+			case RING_RAGE:
+				messagePlayer(player, MESSAGE_HINT | MESSAGE_EQUIPMENT, Language::get(2400));
 				break;
 			case RING_CONSTITUTION:
 				messagePlayer(player, MESSAGE_HINT | MESSAGE_EQUIPMENT, Language::get(2389));
@@ -3930,6 +3943,10 @@ Sint32 Item::weaponGetAttack(const Stat* const wielder) const
 	{
 		return attack + 4;
 	}
+	else if (type == QUIVER_ARCANE)
+	{
+		return attack + 2;
+	}
 	// old formula
 	//attack *= (double)(status / 5.0);
 	//
@@ -4691,7 +4708,18 @@ bool Item::canUnequip(const Stat* const wielder)
 	{
 		if ( wielder->type == AUTOMATON )
 		{
-			return true;
+			if (type == 333 && wielder->EFFECTS[EFF_POTION_STR])
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+		if (type == 333 && wielder->EFFECTS[EFF_POTION_STR]) //fskin note: can't unequip ring of rage during STR
+		{
+			return false;
 		}
 		else if ( shouldInvertEquipmentBeatitude(wielder) )
 		{
@@ -4867,7 +4895,7 @@ void Item::apply(const int player, Entity* const entity)
 		net_packet->address.port = net_server.port;
 		net_packet->len = 30;
 		sendPacketSafe(net_sock, -1, net_packet, 0);
-		if ( type >= ARTIFACT_ORB_BLUE && type <= ARTIFACT_ORB_GREEN )
+		if ( type >= ARTIFACT_ORB_BLUE && type <= ARTIFACT_ORB_GREEN)
 		{
 			applyOrb(player, type, *entity);
 		}
@@ -5789,17 +5817,28 @@ char* Item::getScrollLabel() const
 
 bool itemSpriteIsQuiverThirdPersonModel(const int sprite)
 {
-	for ( int i = QUIVER_SILVER; i <= QUIVER_HUNTING; ++i )
+	for (int i = QUIVER_SILVER; i <= QUIVER_HUNTING; ++i)
 	{
-		if ( sprite == items[i].index
+		if (sprite == items[i].index
 			|| sprite == items[i].index + 1
 			|| sprite == items[i].index + 2
-			|| sprite == items[i].index + 3 )
+			|| sprite == items[i].index + 3)
+		{
+			return true;
+		}
+	}
+	for (int i = QUIVER_ARCANE; i == QUIVER_ARCANE; ++i) //fskin note: look at my c++ skills, I created this "loop" because it's the only of my fixes that works v_v
+	{
+		if (sprite == items[i].index
+			|| sprite == items[i].index + 1
+			|| sprite == items[i].index + 2
+			|| sprite == items[i].index + 3)
 		{
 			return true;
 		}
 	}
 	return false;
+
 }
 
 bool itemSpriteIsQuiverBaseThirdPersonModel(const int sprite)
@@ -5811,12 +5850,20 @@ bool itemSpriteIsQuiverBaseThirdPersonModel(const int sprite)
 			return true;
 		}
 	}
+	for (int i = QUIVER_ARCANE; i == QUIVER_ARCANE; ++i)
+	{
+		if (sprite == items[i].index + 1)
+		{
+			return true;
+		}
+	}
+
 	return false;
 }
 
 bool itemTypeIsQuiver(const ItemType type)
 {
-	return (type >= QUIVER_SILVER && type <= QUIVER_HUNTING);
+	return (type >= QUIVER_SILVER && type <= QUIVER_HUNTING || type == QUIVER_ARCANE);
 }
 
 real_t rangedAttackGetSpeedModifier(const Stat* const myStats)
@@ -5903,7 +5950,7 @@ real_t getArtifactWeaponEffectChance(const ItemType type, Stat& wielder, real_t*
 {
 	if ( type == ARTIFACT_AXE )
 	{
-		const real_t percent = 25 * (wielder.getModifiedProficiency(PRO_AXE)) / 100.f; //0-25%
+		const real_t percent = (wielder.getModifiedProficiency(PRO_AXE)); //fskin note: parashu buff, 0-100%
 		if ( effectAmount )
 		{
 			*effectAmount = 1.5; //1.5x damage.
@@ -5923,10 +5970,21 @@ real_t getArtifactWeaponEffectChance(const ItemType type, Stat& wielder, real_t*
 	}
 	else if ( type == ARTIFACT_SPEAR )
 	{
-		const real_t percent = 25 * (wielder.getModifiedProficiency(PRO_POLEARM)) / 100.f; //0-25%
+		const real_t percent = (wielder.getModifiedProficiency(PRO_POLEARM)); //fskin note: gungnir buff, 0-100%
 		if ( effectAmount )
 		{
-			*effectAmount = .5; // bypasses 50% enemies' armor.
+			if (wielder.getModifiedProficiency(PRO_POLEARM) >= 60)
+			{
+				*effectAmount = .7; // bypasses 70% enemies' armor.
+			}
+			else if (wielder.getModifiedProficiency(PRO_POLEARM) == 100)
+			{
+				*effectAmount = .9; // bypasses 90% enemies' armor.
+			}
+			else
+			{
+				*effectAmount = .5; // bypasses 50% enemies' armor.
+			}
 		}
 
 		return percent;
