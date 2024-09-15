@@ -590,9 +590,14 @@ void actThrown(Entity* my)
 			if ( parent && item )
 			{
 				Entity* spellEntity = createParticleSapCenter(parent, my, 0, my->sprite, -1);
+				real_t dist = entityDist(parent, my);
 				if ( spellEntity )
 				{
-					spellEntity->skill[0] = 150; // 3 second lifetime.
+					spellEntity->skill[0] = 25+dist; //fskin note: boomerang return speed now distance dependent
+					if (spellEntity->skill[0] > 150)
+					{
+						spellEntity->skill[0] = 150; // 3 second lifetime.
+					}
 					// store weapon data
 					spellEntity->skill[10] = item->type;
 					spellEntity->skill[11] = item->status;
@@ -652,9 +657,14 @@ void actThrown(Entity* my)
 			if ( parent )
 			{
 				Entity* spellEntity = createParticleSapCenter(parent, my, 0, my->sprite, -1);
+				real_t dist = entityDist(parent, my);
 				if ( spellEntity )
 				{
-					spellEntity->skill[0] = 150; // 3 second lifetime.
+					spellEntity->skill[0] = 25 + dist; //fskin note: boomerang return speed now distance dependent
+					if (spellEntity->skill[0] > 150)
+					{
+						spellEntity->skill[0] = 150; // 3 second lifetime.
+					}
 					// store weapon data
 					spellEntity->skill[10] = item->type;
 					spellEntity->skill[11] = item->status;
@@ -745,6 +755,39 @@ void actThrown(Entity* my)
 						{
 							int enemyAC = AC(hitstats);
 							damage = my->thrownProjectilePower;
+							real_t dist = entityDist(parent, hit.entity); // fskin note: sniper bonus for thrown
+							if (hitstats->type == LICH
+								|| hitstats->type == DEVIL
+								|| hitstats->type == LICH_ICE
+								|| hitstats->type == LICH_FIRE)
+							{
+								// bosses excluded
+							}
+							else
+							{
+								if (dist > 165)
+								{
+									damage += hitstats->HP / 5;
+									if (item->type == STEEL_CHAKRAM || item->type == CRYSTAL_SHURIKEN)
+									{
+										damage += dist / 4;
+									}
+									else
+									{
+										damage += dist / 8;
+									}
+									if (item->type == STEEL_CHAKRAM || item->type == CRYSTAL_SHURIKEN)
+									{
+										damage *= (parent->getPER()) / 12;
+									}
+									else
+									{
+										damage *= (parent->getPER()) / 15;
+									}
+									Uint32 color = makeColorRGB(0, 255, 225);
+									messagePlayerMonsterEvent(parent->skill[1], color, *hitstats, Language::get(3731), Language::get(3731), MSG_COMBAT);
+								}
+							}
 							if ( my->thrownProjectileCharge >= 1 )
 							{
 								damage += my->thrownProjectileCharge / 5; //0-3 base +damage
@@ -754,6 +797,55 @@ void actThrown(Entity* my)
 							else
 							{
 								enemyAC *= .5;
+							}
+
+							if (my->thrownProjectileCharge >= 1) // fskin note: boomerang root bonus
+							{
+								real_t dist = entityDist(parent, hit.entity);
+								if (item->type == BOOMERANG)
+								{
+									if (dist > 100)
+									{
+										int rootdurmod = dist*1.2;
+										hit.entity->setEffect(EFF_ROOTED, true, rootdurmod, true);
+									}
+								}
+							}
+
+							bool backstab = false; //fskin note: add backstab bonus to throwing weapons
+
+							if (parent && parent->getStats() && hit.entity != nullptr && parent->getStats()->getModifiedProficiency(PRO_STEALTH) >= SKILL_LEVEL_EXPERT)
+							{
+								real_t hitAngle = hit.entity->yawDifferenceFromEntity(my);
+								if ((hitAngle >= 0 && hitAngle <= 2 * PI / 3)) // 120 degree arc
+								{
+									if (hit.entity->monsterState == MONSTER_STATE_WAIT
+										|| hit.entity->monsterState == MONSTER_STATE_PATH
+										|| (hit.entity->monsterState == MONSTER_STATE_HUNT && uidToEntity(hit.entity->monsterTarget) == nullptr))
+									{
+										backstab = true;
+									}
+								}
+							}
+
+							if (backstab)
+							{
+								if (item->type == BRONZE_TOMAHAWK || item->type == IRON_DAGGER)
+								{
+									if (hitstats->type == LICH
+										|| hitstats->type == DEVIL
+										|| hitstats->type == LICH_ICE
+										|| hitstats->type == LICH_FIRE)
+									{
+										// bosses excluded
+									}
+									else
+									{
+										int rootduration = dist;
+										damage *= ((parent->getPER()) / 40) + ((parent->getStats()->getModifiedProficiency(PRO_STEALTH)) / 40);
+										hit.entity->setEffect(EFF_ROOTED, true, rootduration, true);
+									}
+								}
 							}
 
 							real_t targetACEffectiveness = Entity::getACEffectiveness(hit.entity, hitstats, hit.entity->behavior == &actPlayer, parent, parentStats);
@@ -776,6 +868,53 @@ void actThrown(Entity* my)
 					// zero out the damage if negative, thrown weapons will do piercing damage if not blocking.
 					damage = std::max(0, damage);
 				}
+				// fskin note: no throw fear after all, not sure how to make it feel right
+				//if (damage > 0 && parent)
+				//{
+				//	if (parent->getStats()->CHR > 0)
+
+				//		if (((hitstats->type == RAT && hitstats->MAXHP < parent->getStats()->CHR * 8)
+				//			|| (hitstats->type == SKELETON && hitstats->MAXHP < parent->getStats()->CHR * 8)
+				//			|| (hitstats->type == SPIDER && hitstats->MAXHP < parent->getStats()->CHR * 8)
+				//			|| (hitstats->type == GNOME && hitstats->MAXHP < parent->getStats()->CHR * 8)
+				//			|| (hitstats->type == TROLL && hitstats->MAXHP < parent->getStats()->CHR * 10)
+				//			|| (hitstats->type == GHOUL && hitstats->MAXHP < parent->getStats()->CHR * 7)
+				//			|| (hitstats->type == SLIME && hitstats->MAXHP < parent->getStats()->CHR * 7)
+				//			|| (hitstats->type == GOBLIN && hitstats->MAXHP < parent->getStats()->CHR * 6.5)
+				//			|| (hitstats->type == SCARAB && hitstats->MAXHP < parent->getStats()->CHR * 6)
+				//			|| (hitstats->type == SCORPION && hitstats->MAXHP < parent->getStats()->CHR * 6)
+				//			|| (hitstats->type == INSECTOID && hitstats->MAXHP < parent->getStats()->CHR * 5.5)
+				//			|| (hitstats->type == CREATURE_IMP && hitstats->MAXHP < parent->getStats()->CHR * 6)
+				//			|| (hitstats->type == DEMON && hitstats->MAXHP < parent->getStats()->CHR * 5.5)
+				//			|| (hitstats->type == AUTOMATON && hitstats->MAXHP < parent->getStats()->CHR * 6)
+				//			|| (hitstats->type == VAMPIRE && hitstats->MAXHP < parent->getStats()->CHR * 6)
+				//			|| (hitstats->type == GOATMAN && hitstats->MAXHP < parent->getStats()->CHR * 6)
+				//			|| (hitstats->type == SUCCUBUS && hitstats->MAXHP < parent->getStats()->CHR * 6)
+				//			|| (hitstats->type == INCUBUS && hitstats->MAXHP < parent->getStats()->CHR * 6)
+				//			|| (hitstats->type == KOBOLD && hitstats->MAXHP < parent->getStats()->CHR * 6)
+				//			|| (hitstats->type == COCKATRICE && hitstats->MAXHP < parent->getStats()->CHR * 12 && hitstats->HP < hitstats->MAXHP / 4)
+				//			|| (hitstats->type == CRYSTALGOLEM && hitstats->MAXHP < parent->getStats()->CHR * 5)
+				//			) || (currentlevel > 35 && parent->getStats()->CHR > currentlevel * 2))
+				//		{
+				//			{
+				//				//int duration = parent->getStats()->CHR * 2.6 - ((hitstats->CHR * (hitstats->HP / hitstats->MAXHP)) + damage*0.8);
+				//				int duration = (parent->getStats()->CHR * 2) + damage * 0.8;
+				//				if (duration >= 80)
+				//				{
+				//					duration = 80;
+				//				}
+				//				if (parent->getStats()->MAXHP >= hitstats->MAXHP * 2)
+				//				{
+				//					duration += parent->getStats()->CHR;
+				//				}
+
+				//				if (hitstats->HP > 0 && !hitstats->EFFECTS[EFF_FEAR])
+				//				{
+				//					hit.entity->setEffect(EFF_FEAR, true, duration, true);
+				//				}
+				//			}
+				//		}
+				//}
 				switch ( item->type )
 				{
 					// thrown weapons do some base damage if absorbed by armor.
