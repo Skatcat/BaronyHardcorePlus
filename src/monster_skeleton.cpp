@@ -97,7 +97,7 @@ void initSkeleton(Entity* my, Stat* myStats)
 							else
 							{
 								// set variables for first time cast
-								myStats->HP = 60;
+								myStats->HP = 75; //fskin note: slight increase
 								myStats->MAXHP = myStats->HP;
 								myStats->OLDHP = myStats->HP;
 
@@ -1686,14 +1686,14 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				{
 					myStats->shield->type = STEEL_SHIELD;
 				}
-				if (!myStats->amulet)
-				{
-					myStats->amulet = newItem(AMULET_LIFESAVING, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
-				}
-				else
-				{
-					myStats->amulet->type = AMULET_LIFESAVING;
-				}
+				//if (!myStats->amulet)
+				//{
+				//	myStats->amulet = newItem(AMULET_LIFESAVING, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+				//}
+				//else
+				//{
+				//	myStats->amulet->type = AMULET_LIFESAVING;
+				//}
 				if ( !myStats->shoes )
 				{
 					myStats->shoes = newItem(CRYSTAL_BOOTS, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
@@ -2016,14 +2016,14 @@ void Entity::skeletonSummonSetEquipment(Stat* myStats, int rank)
 				{
 					myStats->gloves->type = CRYSTAL_GLOVES;
 				}
-				if (!myStats->amulet)
-				{
-					myStats->amulet = newItem(AMULET_LIFESAVING, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
-				}
-				else
-				{
-					myStats->amulet->type = AMULET_LIFESAVING;
-				}
+				//if (!myStats->amulet)
+				//{
+				//	myStats->amulet = newItem(AMULET_LIFESAVING, DECREPIT, 5, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
+				//}
+				//else
+				//{
+				//	myStats->amulet->type = AMULET_LIFESAVING;
+				//}
 				if ( !myStats->shoes )
 				{
 					myStats->shoes = newItem(STEEL_BOOTS_FEATHER, DECREPIT, 25, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, nullptr);
