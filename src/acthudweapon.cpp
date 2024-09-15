@@ -4373,6 +4373,9 @@ void actHudArrowModel(Entity* my)
 			case QUIVER_HUNTING:
 				my->sprite = 941;
 				break;
+			case QUIVER_ARCANE:
+				my->sprite = 1327;
+				break;
 			default:
 				break;
 		}
