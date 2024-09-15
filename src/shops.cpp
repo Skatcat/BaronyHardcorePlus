@@ -31,8 +31,8 @@ char shopkeepername_client[MAXPLAYERS][64];
 
 std::unordered_map<int, std::unordered_set<int>> shopkeeperMysteriousItems(
 {
-	{ ARTIFACT_ORB_GREEN, { ARTIFACT_BOW, QUIVER_HUNTING, QUIVER_PIERCE } },
-	{ ARTIFACT_ORB_BLUE, { ARTIFACT_MACE, ENCHANTED_FEATHER } },
+	{ ARTIFACT_ORB_GREEN, { ARTIFACT_BOW, QUIVER_HUNTING, QUIVER_PIERCE, CROSSBOW } }, //fskin note: added blessed xbow ... since you get Khrys in temple now, green orb is kinda shitty to keep? maybe add new items in the future
+	{ ARTIFACT_ORB_BLUE, { ARTIFACT_MACE, ENCHANTED_FEATHER, AMULET_LIFESAVING } }, //fskin note: added lifesaving amulet
 	{ ARTIFACT_ORB_RED, { CRYSTAL_SWORD, CRYSTAL_BATTLEAXE, CRYSTAL_SPEAR, CRYSTAL_MACE, MASK_ARTIFACT_VISOR } }
 });
 
