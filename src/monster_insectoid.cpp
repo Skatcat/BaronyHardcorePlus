@@ -47,10 +47,10 @@ void initInsectoid(Entity* my, Stat* myStats)
 		    if (myStats->sex == FEMALE) {
 		        my->sprite = 1057;
 		    }
-			if ( !strncmp(map.name, "Sokoban", 7) || !strncmp(map.name, "The Labyrinth", 13) )
-			{
-				strcpy(myStats->name, "insectoid raider");
-			}
+			//if ( !strncmp(map.name, "Sokoban", 7) || !strncmp(map.name, "The Labyrinth", 13) )
+			//{
+			//	strcpy(myStats->name, "insectoid raider");
+			//}
 			if ( !myStats->leader_uid )
 			{
 				myStats->leader_uid = 0;
