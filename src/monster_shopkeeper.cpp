@@ -236,13 +236,14 @@ void initShopkeeper(Entity* my, Stat* myStats)
 				{
 					entity->parent = my->getUID();
 					Stat* followerStats = entity->getStats();
+					followerStats->leader_uid = entity->parent;
 					if (followerStats)
 					{
 						strcpy(followerStats->name, "mercenary");
 						followerStats->leader_uid = entity->parent;
 						followerStats->appearance = 0;
 						followerStats->sex = MALE;
-						followerStats->LVL = 50;
+						followerStats->LVL = 15;
 						if (currentlevel < 25)
 						{
 							followerStats->HP = 175;
