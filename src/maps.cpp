@@ -1013,7 +1013,8 @@ int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int, int> 
 				secretlevelexit = 0;
 			}
 		}
-		else if ( (currentlevel == 3 && map_rng.rand() % 2) || currentlevel == 2 )
+		//else if ( (currentlevel == 3 && map_rng.rand() % 2) || currentlevel == 2 )
+		else if (currentlevel == 3  || currentlevel == 2 ) //fskin note: minetown always spawns
 		{
 			secretlevelexit = 1;
 		}
@@ -6356,7 +6357,7 @@ void assignActions(map_t* map)
 				entity->sprite = 601; //pedestal base
 				entity->flags[PASSABLE] = false;
 				entity->pedestalOrbType = entity->pedestalOrbType + 1;// set in editor as 0-3, need 1-4.
-				if ( entity->pedestalHasOrb == 1 ) // set in editor
+				if (entity->pedestalHasOrb == 1) // set in editor
 				{
 					entity->pedestalHasOrb = entity->pedestalOrbType;
 				}
@@ -6364,7 +6365,7 @@ void assignActions(map_t* map)
 				entity->pedestalInit = 0;
 				//entity->pedestalInGround = 0; // set in editor
 				//entity->pedestalLockOrb // set in editor
-				if ( entity->pedestalInGround )
+				if (entity->pedestalInGround)
 				{
 					entity->z += 11;
 					entity->flags[PASSABLE] = true;
@@ -6382,7 +6383,7 @@ void assignActions(map_t* map)
 				childEntity->flags[UNCLICKABLE] = true;
 				childEntity->flags[PASSABLE] = true;
 				childEntity->flags[INVISIBLE] = false;
-				if ( entity->pedestalInGround )
+				if (entity->pedestalInGround)
 				{
 					childEntity->z += 11;
 					childEntity->orbStartZ = -2;
