@@ -498,6 +498,8 @@ char itemNameStrings[NUM_ITEM_STRINGS][34] =
 	"spellbook_annihilateundead",
 	"spellbook_annihilatemonstrosities",
 	"spellbook_annihilatehellspawn",
+	"ring_rage",
+	"quiver_arcane",
 	""
 };
 
@@ -701,6 +703,7 @@ char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][34] =
 		"quiver_crystal",
 		"quiver_hunting",
 		"artifact_shield",
+		"quiver_arcane",
 		""
 	},
 	{
@@ -749,6 +752,7 @@ char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][34] =
 		"ring_levitation",
 		"ring_regeneration",
 		"ring_teleportation",
+		"ring_rage",
 		""
 	},
 	{
