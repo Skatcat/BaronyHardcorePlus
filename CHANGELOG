@@ -74,7 +74,7 @@ SEPTEMBER 2024 UPDATE
 -- buffed the artifact weapons
 --- Gungnir and Parashu effect chance to scales from 0 - 100 % like Dyrnwyn
 --- Gungnir AC pierce increases at 60 polearm skill (70 % pierce) and at 100 polearm skill (90 % pierce)
---- Sharur now returns your MP for every spell costing less than 10 mana and returns half your MP for all other spells
+--- Sharur now returns your MP for every spell costing less than 6 mana and returns half your MP for all other spells
 --- Sharur lets you snap out of sleep and fear (because his voice is so grating)
 # the artifact weapons were not a satisfying in HC+ before, now their abilities should feel more useful
 -- potions of strength increase throwing weapon velocity
