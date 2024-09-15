@@ -1,0 +1,122 @@
+SEPTEMBER 2024 UPDATE
+
+- race balance changes
+-- damage tables adjusted
+--- unarmed is now only weak vs trolls, slimes, shadows, mimics and automatons; it's also quite strong vs the bosses now
+# unarmed is an underwhelming weapon type in general, this change is to make it only uneffective in the most intuitive cases.
+--- goblins are now slightly resistant to all melee
+# as a melee-focused race, it makes sense for goblins to be a bit tougher at close-range
+--- goatmen are now resistant to all melee except polearms; less susceptible to magic by 10 %
+# same reasoning as goblin - here the damage tables didn't reflect the goatman's specialization properly, also they took the most exta damage from magic (70 %) with little to outweigh it.
+--- automatons now have 50 % ranged resistance
+# intuitive buff for a race that otherwise has only weaknesses as far as damage goes.
+--- vampires are now weaker against melee
+# small intuitive nerf to vampires
+--- succubi are now weaker against melee
+# see vampire
+
+- class balance changes
+-- Barbarian and Ninja stat growth swapped
+# doesn't it make more sense for the Barbarian to be the class with CON growth? and less CHR? seems like both a balance and intuition adjustment
+-- Arcanist: spawns with new Arcane Arrows, which apply Arcane Mark
+# to give the Arcanist added support capabilities and aid him in early game where ranged resistances are abundant
+-- Barbarian: spawns with new Ring of Rage item and Potion of Strength
+--- Ring of Rage: buffs strength potion effects, giving more STR, giving CON and lifesteal on enemy kills. downside: you lose HP while under a strength potion's effect and health potions are weakened
+# a fun rework that fits with the classic Barbarian archetype
+-- Brewer: starts with healing, paralysis and strength potions. Spawns with additional empty bottles. Spawns with 10 fewer Alchemy skill points, gains Hazard Goggles
+# the Brewer is supposed to get creative with having access to many potions early on, but access to really good potions is luck based. this should give him a bit of early game consistency. Also, the addition of goggles will make him good against firestorm gnomes. More empty bottles = more opportunities to get early water
+-- Conjurer: conjured skeletons get 1.6x EXP; life-saving amulet removed
+# the Conjurer never scaled properly in HC+, this should make him viable again
+-- Merchant: starts with a Purple Artifact Orb
+# this gives the Merchant access to some secret parts of the game - his new class gimmick
+-- Rogue: starts with 30 sword and 30 ranged as opposed to 25
+# slight buff to his stats
+-- Rogue: now has bear traps and daggers
+# items moved from Ninja to Rogue
+-- Ninja: starts with 20 ranged as opposed to 40
+# the Ranged skill of the Ninja probably reflects his proficiency with throwing weapons. Imo 40 is too big of a boost for a damage type that is quite crazy due to its later legendary bonuses. In the end, the Ninja should be more incentivized to be a melee build - this is also a shadow buff to the Rogue
+-- Ninja: PER and CON growth swapped, spawns with 2 PER instead of 1
+# why does the fragile assassin level CON? Give him PER to make use of the new sniper bonus
+-- Ninja: no bear trap and daggers, has 1 crystal shuriken and potions of confusion now.
+# fits his glass cannon DPS archetype more
+
+- map and monster changes
+-- mine to swamp miniboss harder, caves to citadel miniboss harder
+# I found The Jibster and Deekin to be a bit underwhelming
+-- you can't reach the Minetown miniboss anymore by digging through the exit room
+# was a bit too simple for my taste
+-- Minetown always spawns
+# not getting minetown is just too big a disadvantage in its current state, it messes with the entire run imo
+-- swamp to labyrinth miniboss drops potions of strength
+# just to add another opportunity to get some strength potions
+-- increased power of Mystic Library humans
+# to make them not cannon fodder
+-- stealth hunters (invisible levitating skeletons with hunting arrows) and blinders (inviisble skeletons throwing blindness potions) added to the Underworld
+# I wanted the Underworld to be even more messed up
+-- certain monsters will now relentlessly chase players (imps in Haunted Castle, vampire assassins and The Jubster; also floor 41 of Hell)
+# when fitting, I decided to make monsters actively engage the player on the entire map
+-- in SkyTown, killing guards or the mayor will now spawn SkyTown Deathbringers who will hunt players relentlessly
+# to incentivize a more stealthy or peaceful approach to the first segment
+-- Vampire Assassins spawn in invaded Hamlet
+# to add some challenge
+-- Baphomet now fires poison and bleed projectiles alongside fireballs
+# Bapho's projectiles were kind of weak compared to everything else that's going on in the fight so now he basically spawns 3 projectiles at once, all inside each other
+-- lava boulders in the Baphomet fight deal much higher damage now
+# just to give you another reason to cry
+-- Erudyce's missile barrage is faster; Clones of Orpheus now appear when you kill Erudyce first; curses will annoy you during the fight
+# To spice the fight up
+-- You can now always find a Spellbook of Teleportation on the Underworld start island
+# Due to there being more monsters, it seems to occur at times, that the shrines can't teleport you due to the destination being blocked my monsters. If they don't/can't move away, you are kinda softlocked. Giving players the opportunity to learn teleport (if they haven't yet) alleviates this.
+
+- item changes
+-- adjusted spawn level of life saving amulets
+# life saving artifacts were too plentiful in my opinion
+-- buffed the artifact weapons
+--- Gungnir and Parashu effect chance to scales from 0 - 100 % like Dyrnwyn
+--- Gungnir AC pierce increases at 60 polearm skill (70 % pierce) and at 100 polearm skill (90 % pierce)
+--- Sharur now returns your MP for every spell costing less than 10 mana and returns half your MP for all other spells
+--- Sharur lets you snap out of sleep and fear (because his voice is so grating)
+# the artifact weapons were not a satisfying in HC+ before, now their abilities should feel more useful
+-- potions of strength increase throwing weapon velocity
+# just for fun
+
+- spell changes
+-- strike spell buffed, bonus damage dependent on unarmed skill
+# this spell is not worth standing in place for 2 seconds, maybe like this it'll have its niches
+
+- miscellaneous changes
+-- enemy INT now affects their spell power - adding INT/2 to damage
+# basically this means magic monsters can now be QUITE strong
+-- the ranged armor pierce chance dependent on perception now goes up to 100 %
+# PER is bad enough anyway, give it a buff
+-- added a sniper bonus to ranged and thrown weapons, based on PER and range (excluding bosses)
+-- chakrams and shuriken have an increased sniping bonus
+-- daggers and tomahawks can, starting with 60 stealth, inflict root upon backstabs
+-- boomerang will always root at a certain distance, root duration scales with distance
+-- boomerang return speed scales with range (caps at 3 seconds, like vanilla)
+# this adds yet another use to PER which rewards positioning
+-- added CHR based fear - if your CHR is high enough, charged hits inflict fear. Whether it works and duration is based on your CHR and their stats. Backstabs always give duration bonus.
+-- it also works on ranged, in this case, however it's an Arbalest only bonus. Whether it works or not is also based on ranged skill here.
+-- added regeneration to followers based on CHR and leadership. Notes: The buff only applies to monsters that aren't much stronger than yourself and only if you have more than 1/4 of your HP.
+# CHR is also an underwhelming stat, with this perhaps it'll have more value
+-- attacking during dash now gives you a damage bonus
+-- unlocked at 60 stealth, hitting a charged backstab during dash inflicts extra damage, root and slow
+# thought it'd be fun
+-- maximum attainable MP regen increased
+# because it's fun to stack MP regen
+-- golems and cockatrices are protected from Domination starting with the Citadel
+# if you manage to dominate many of these guys, it's basically GG. this change should make it less of a cheesy strat and make the Caves an important place for you to collect golems and cockatrices if you want to do that.
+-- Hell is now redesigned, adding a large version and a wave based arena!
+# to make it a bit more interesting
+-- taking too long at the Baron Herx fight will now not spawn monsters but send you 20 floors ahead, straight into Hell
+# this should equal death but IF you beat the game like this, consider yourself a GOD
+
+- fixes and QoL
+-- hell was redesigned due to performance issues
+-- added a warning when Levitation is running out
+-- fixed a bug where a multiplayer client's appraisal would be set to 0 due to faulty map scripts
+-- crashes and inventory saving issue in SkyTown fixed
+-- fixed the SkyTown gates not being interactable with Interact Aim Assist disabled
+-- fixed the Reflect Magic spell crashing the game
+-- removed enemies wielding the fear spell since it caused crashes in combination with reflecting
+-- added an alternative version of Ozyx' Domain without voice acting. simply rename the file called "fskincustom_novoice" to "fskincustom" and backup the original if you want to switch back.
