@@ -44,7 +44,7 @@ Levels
 - The same goes for Baphomet. Slay the orb bearers in the corners of his arena if you want to escape the Devil's realm.
   
 Skills
-- Blocking rework: Torches only allow leveling blocking until 20; steel shield or better is needed to level blocking past 80; legendary bonus changed: Move faster while blocking & new Vanguard status!
+- Blocking rework: Torches only allow leveling blocking past Novice; steel shield or better is needed to level blocking past 80; legendary bonus changed: Move faster while blocking & new Vanguard status!
 - Mace: Legendary bonus changed: Now always paralyzes, duration scales inversely with CON. High CON enemies will barely be stunned while low CON enemies will be stunned for a long time
 - Ranged: Legendary bonus additions: Crossbow rapid fire; arbalest no reload + increased pushback; bows conserve ammo
 - Tinkering: Legendary bonus addition: Scrap is weightless
