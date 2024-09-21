@@ -9079,7 +9079,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 										increaseSkill = false;
 									}
 									else if ( itemCategory(hitstats->shield) != ARMOR
-										&& hitstats->getProficiency(PRO_SHIELD) >= SKILL_LEVEL_NOVICE )
+										&& hitstats->getProficiency(PRO_SHIELD) > SKILL_LEVEL_NOVICE )
 									{
 										increaseSkill = false; // fskin note: non-shield offhands dont increase skill past 20.
 									}
