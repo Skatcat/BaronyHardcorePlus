@@ -8647,7 +8647,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 									|| myStats->weapon->type == CRYSTAL_SPEAR))
 							{
 								int chance = 20; //fskin note: increased from 6
-								if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+								if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
 								{
 									chance = 12;
 								}
@@ -8655,7 +8655,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 								if (myStats->type == GOBLIN)
 								{
 									chance = 25; //fskin note: increased from 10
-									if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+									if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
 									{
 										chance = 16;
 									}
@@ -8680,7 +8680,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 									steamStatisticUpdateClient(player, STEAM_STAT_BARFIGHT_CHAMP, STEAM_STAT_INT, 1);
 								}
 								int chance = 32; //fskin note: increased from 8
-								if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+								if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
 								{
 									chance = 10;
 								}
@@ -8688,7 +8688,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 								if (myStats->type == GOBLIN)
 								{
 									chance = 38; //fskin note: increased from 12
-									if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+									if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
 									{
 										chance = 14;
 									}
@@ -8703,7 +8703,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 							else
 							{
 								int chance = 35; //fskin note: increased from 10
-								if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+								if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
 								{
 									chance = 12;
 								}
@@ -8711,7 +8711,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 								if (myStats->type == GOBLIN && weaponskill != PRO_RANGED)
 								{
 									chance = 40; //fskin note: increased from 14
-									if (myStats->getProficiency(weaponskill) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+									if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
 									{
 										chance = 16;
 									}
@@ -9079,7 +9079,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 										increaseSkill = false;
 									}
 									else if ( itemCategory(hitstats->shield) != ARMOR
-										&& hitstats->getProficiency(PRO_SHIELD) > SKILL_LEVEL_NOVICE )
+										&& hitstats->getProficiency(PRO_SHIELD) >= 20 )
 									{
 										increaseSkill = false; // fskin note: non-shield offhands dont increase skill past 20.
 									}
