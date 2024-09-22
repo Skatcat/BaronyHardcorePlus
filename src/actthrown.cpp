@@ -1420,7 +1420,7 @@ void actThrown(Entity* my)
 
 					int chance = 50; // fskin note: increased from 5
 
-					if (parent && parent->getStats()->getProficiency(PRO_RANGED) < SKILL_LEVEL_SKILLED) // fskin note: easier to level until 40
+					if (parent && parent->getStats()->getProficiency(PRO_RANGED) < 40) // fskin note: easier to level until 40
 					{
 						chance = 12;
 					}
