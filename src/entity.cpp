@@ -8607,7 +8607,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 							{
 								damage *= 1.1;
 								hit.entity->setEffect(EFF_ROOTED, true, 100, true);
-								hit.entity->setEffect(EFF_SLOW, true, 200, true);
+								hit.entity->setEffect(EFF_SLOW, true, 400, true);
 							}
 						}
 						else
@@ -8636,130 +8636,177 @@ void Entity::attack(int pose, int charge, Entity* target)
 					{
 						doSkillIncrease = false; // no skill for killing/hurting players
 					}
+					if ( hit.entity->behavior == &actMonster && hit.entity->monsterAllyGetPlayerLeader() && myStats->getProficiency(weaponskill) >= 40)
+					{
+						doSkillIncrease = false; // fskin note: cap leveling on allies at 40
+					}
 
-						if (doSkillIncrease
-							&& ((weaponskill >= PRO_SWORD && weaponskill <= PRO_POLEARM) || weaponskill == PRO_UNARMED || (whip && weaponskill == PRO_RANGED)))
+					if (doSkillIncrease
+						&& ((weaponskill >= PRO_SWORD && weaponskill <= PRO_POLEARM) || weaponskill == PRO_UNARMED || (whip && weaponskill == PRO_RANGED)))
+					{
+						if (myStats->weapon &&
+							(myStats->weapon->type == CRYSTAL_BATTLEAXE
+								|| myStats->weapon->type == CRYSTAL_MACE
+								|| myStats->weapon->type == CRYSTAL_SWORD
+								|| myStats->weapon->type == CRYSTAL_SPEAR))
 						{
-							if (myStats->weapon &&
-								(myStats->weapon->type == CRYSTAL_BATTLEAXE
-									|| myStats->weapon->type == CRYSTAL_MACE
-									|| myStats->weapon->type == CRYSTAL_SWORD
-									|| myStats->weapon->type == CRYSTAL_SPEAR))
+							int chance = 20; //fskin note: increased from 6
+							if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
 							{
-								int chance = 20; //fskin note: increased from 6
-								if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
-								{
-									chance = 12;
-								}
-								bool notify = true;
-								if (myStats->type == GOBLIN)
-								{
-									chance = 25; //fskin note: increased from 10
-									if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
-									{
-										chance = 16;
-									}
-									notify = true;
-								}
-
-								if (local_rng.rand() % chance == 0)
-								{
-									if (hitstats->type != DUMMYBOT || (hitstats->type == DUMMYBOT && myStats->getProficiency(weaponskill) < SKILL_LEVEL_BASIC))
-									{
-										this->increaseSkill(weaponskill, notify);
-										skillIncreased = true;
-									}
-								}
+								chance = 12;
 							}
-							else if (hitstats->HP <= 0)
+							bool notify = true;
+							if (myStats->type == GOBLIN)
 							{
-								if (player >= 0 && weaponskill == PRO_UNARMED
-									&& stats[player]->type == GOATMAN
-									&& stats[player]->EFFECTS[EFF_DRUNK])
-								{
-									steamStatisticUpdateClient(player, STEAM_STAT_BARFIGHT_CHAMP, STEAM_STAT_INT, 1);
-								}
-								int chance = 32; //fskin note: increased from 8
+								chance = 25; //fskin note: increased from 10
 								if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
 								{
-									chance = 10;
+									chance = 16;
 								}
-								bool notify = true;
-								if (myStats->type == GOBLIN)
+								notify = true;
+							}
+
+							if (hitstats->type == DUMMYBOT) //fskin note: dummy bot speed weapon skilling (crystal)
+							{
+								if (myStats->getProficiency(weaponskill) < 20)
 								{
-									chance = 38; //fskin note: increased from 12
-									if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
-									{
-										chance = 14;
-									}
-									notify = true;
+									chance = 1;
 								}
-								if (local_rng.rand() % chance == 0)
+								if (myStats->getProficiency(weaponskill) >= 20 && myStats->getProficiency(weaponskill) < 60)
 								{
+									chance = 2;
+								}
+								if (myStats->getProficiency(weaponskill) >= 60 && myStats->getProficiency(weaponskill) < 100)
+								{
+									chance = 4;
+								}
+								notify = true;
+							}
+
+							if (local_rng.rand() % chance == 0) //fskin note: edited
+							{
+							
 									this->increaseSkill(weaponskill, notify);
 									skillIncreased = true;
-								}
-							}
-							else
-							{
-								int chance = 35; //fskin note: increased from 10
-								if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
-								{
-									chance = 12;
-								}
-								bool notify = true;
-								if (myStats->type == GOBLIN && weaponskill != PRO_RANGED)
-								{
-									chance = 40; //fskin note: increased from 14
-									if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
-									{
-										chance = 16;
-									}
-									notify = true;
-								}
-								if (local_rng.rand() % chance == 0)
-								{
-									if (hitstats->type != DUMMYBOT || (hitstats->type == DUMMYBOT && myStats->getProficiency(weaponskill) < SKILL_LEVEL_BASIC))
-									{
-										this->increaseSkill(weaponskill, notify);
-										skillIncreased = true;
-									}
-								}
+							
 							}
 						}
+						else if (hitstats->HP <= 0)
+						{
+							if (player >= 0 && weaponskill == PRO_UNARMED
+								&& stats[player]->type == GOATMAN
+								&& stats[player]->EFFECTS[EFF_DRUNK])
+							{
+								steamStatisticUpdateClient(player, STEAM_STAT_BARFIGHT_CHAMP, STEAM_STAT_INT, 1);
+							}
+							int chance = 32; //fskin note: increased from 8
+							if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
+							{
+								chance = 10;
+							}
+							bool notify = true;
+							if (myStats->type == GOBLIN)
+							{
+								chance = 38; //fskin note: increased from 12
+								if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
+								{
+									chance = 14;
+								}
+								notify = true;
+							}
+							if (local_rng.rand() % chance == 0)
+							{
+								this->increaseSkill(weaponskill, notify);
+								skillIncreased = true;
+							}
+						}
+						else
+						{
+							int chance = 35; //fskin note: increased from 10
+							if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
+							{
+								chance = 12;
+							}
+							bool notify = true;
+							if (myStats->type == GOBLIN && weaponskill != PRO_RANGED)
+							{
+								chance = 40; //fskin note: increased from 14
+								if (myStats->getProficiency(weaponskill) < 40) // fskin note: easier to level until 40
+								{
+									chance = 16;
+								}
+								notify = true;
+							}
+
+							if (hitstats->type == DUMMYBOT) //fskin note: dummy bot speed weapon skilling (regular)
+							{
+								if (weaponskill != PRO_UNARMED && (myStats->weapon->type != ARTIFACT_AXE && myStats->weapon->type != ARTIFACT_MACE && myStats->weapon->type != ARTIFACT_SPEAR && myStats->weapon->type != ARTIFACT_SWORD))
+								{
+									if (myStats->getProficiency(weaponskill) < 20)
+									{
+										chance = 2;
+									}
+									if (myStats->getProficiency(weaponskill) >= 20 && myStats->getProficiency(weaponskill) < 60)
+									{
+										chance = 4;
+									}
+									if (myStats->getProficiency(weaponskill) >= 60 && myStats->getProficiency(weaponskill) < 100)
+									{
+										chance = 10;
+									}
+								}
+								else
+								{
+									if (myStats->getProficiency(weaponskill) < 20)
+									{
+										chance = 2;
+									}
+								}
+								notify = true;
+							}
+
+							if (local_rng.rand() % chance == 0) //fskin note: edited
+							{
+							
+									this->increaseSkill(weaponskill, notify);
+									skillIncreased = true;
+							
+							}
+						}
+					}
 				//	}
 					
 
-					if ( skillIncreased && myStats->type == GOBLIN && weaponskill != PRO_RANGED )
+				if ( skillIncreased && myStats->type == GOBLIN && weaponskill != PRO_RANGED )
+				{
+					// goblins level up all combat skills at once.
+					int numIncreases = 0;
+					if ( weaponskill != PRO_SWORD )
 					{
-						// goblins level up all combat skills at once.
-						int numIncreases = 0;
-						if ( weaponskill != PRO_SWORD )
-						{
-							numIncreases += this->increaseSkill(PRO_SWORD, false) ? 1 : 0;
-						}
-						if ( weaponskill != PRO_MACE )
-						{
-							numIncreases += this->increaseSkill(PRO_MACE, false) ? 1 : 0;
-						}
-						if ( weaponskill != PRO_AXE )
-						{
-							numIncreases += this->increaseSkill(PRO_AXE, false) ? 1 : 0;
-						}
-						if ( weaponskill != PRO_POLEARM )
-						{
-							numIncreases += this->increaseSkill(PRO_POLEARM, false) ? 1 : 0;
-						}
-						if ( weaponskill != PRO_UNARMED )
-						{
-							numIncreases += this->increaseSkill(PRO_UNARMED, false) ? 1 : 0;
-						}
-						if ( player >= 0 && numIncreases > 0 )
-						{
-							Uint32 color = makeColorRGB(255, 255, 0);
-							messagePlayerColor(player, MESSAGE_PROGRESSION, color, Language::get(3446));
-						}
+						numIncreases += this->increaseSkill(PRO_SWORD, false) ? 1 : 0;
 					}
+					if ( weaponskill != PRO_MACE )
+					{
+						numIncreases += this->increaseSkill(PRO_MACE, false) ? 1 : 0;
+					}
+					if ( weaponskill != PRO_AXE )
+					{
+						numIncreases += this->increaseSkill(PRO_AXE, false) ? 1 : 0;
+					}
+					if ( weaponskill != PRO_POLEARM )
+					{
+						numIncreases += this->increaseSkill(PRO_POLEARM, false) ? 1 : 0;
+					}
+					if ( weaponskill != PRO_UNARMED )
+					{
+						numIncreases += this->increaseSkill(PRO_UNARMED, false) ? 1 : 0;
+					}
+					if ( player >= 0 && numIncreases > 0 )
+					{
+						Uint32 color = makeColorRGB(255, 255, 0);
+						messagePlayerColor(player, MESSAGE_PROGRESSION, color, Language::get(3446));
+					}
+				}
 
 					// write the obituary
 					if ( hit.entity != this )
@@ -8852,6 +8899,24 @@ void Entity::attack(int pose, int charge, Entity* target)
 								// double durability.
 								degradeOnZeroDMG *= 2;
 								degradeOnNormalDMG *= 2;
+							}
+
+							if (hitstats->type == DUMMYBOT && hit.entity->monsterIsTinkeringCreation()) //fskin note: dummybot weapon degradation
+							{
+								if (myStats->weapon && weaponskill != PRO_RANGED)
+								{
+									if (weaponType == CRYSTAL_BATTLEAXE || weaponType == CRYSTAL_MACE || weaponType == CRYSTAL_SWORD || weaponType == CRYSTAL_SPEAR)
+									{
+										degradeWeapon = true;
+									}
+									else if (!isWeakWeapon)
+									{
+										if (local_rng.rand() % 3 == 0)
+										{
+											degradeWeapon = true;
+										}
+									}
+								}
 							}
 
 							if	( (local_rng.rand() % degradeOnZeroDMG == 0 && damage == 0)
