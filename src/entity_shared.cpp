@@ -500,6 +500,8 @@ char itemNameStrings[NUM_ITEM_STRINGS][34] =
 	"spellbook_annihilatehellspawn",
 	"ring_rage",
 	"quiver_arcane",
+	"rock_hunger_empty"
+	"rock_hunger_full",
 	""
 };
 
