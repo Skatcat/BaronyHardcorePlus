@@ -5568,7 +5568,18 @@ Sint32 statGetSTR(Stat* entitystats, Entity* my)
 	{
 		if ( entitystats->EFFECTS_TIMERS[EFF_VAMPIRICAURA] == -2 )
 		{
-			STR += 3; // player cursed vampiric bonus
+			STR += 2; // player cursed vampiric bonus
+			STR *= 1.15; // fskin note: buffed
+			if (entitystats->HUNGER <= getEntityHungerInterval(-1, my, entitystats, HUNGER_INTERVAL_WEAK))
+			{
+				STR += 7;
+				STR *= 1.15;
+			}
+			if (entitystats->HUNGER <= getEntityHungerInterval(-1, my, entitystats, HUNGER_INTERVAL_STARVING))
+			{
+				STR += 7;
+				STR *= 1.15;
+			}
 		}
 		else
 		{
@@ -5687,7 +5698,18 @@ Sint32 statGetDEX(Stat* entitystats, Entity* my)
 	{
 		if ( entitystats->EFFECTS_TIMERS[EFF_VAMPIRICAURA] == -2 )
 		{
-			DEX += 3; // player cursed vampiric bonus
+			DEX += 2; // player cursed vampiric bonus
+			DEX *= 1.15; // fskin note: buffed
+			if (entitystats->HUNGER <= getEntityHungerInterval(-1, my, entitystats, HUNGER_INTERVAL_WEAK))
+			{
+				DEX += 5;
+				DEX *= 1.15;
+			}
+			if (entitystats->HUNGER <= getEntityHungerInterval(-1, my, entitystats, HUNGER_INTERVAL_STARVING))
+			{
+				DEX += 5;
+				DEX *= 1.15;
+			}
 		}
 		else
 		{
@@ -8636,9 +8658,9 @@ void Entity::attack(int pose, int charge, Entity* target)
 					{
 						doSkillIncrease = false; // no skill for killing/hurting players
 					}
-					if ( hit.entity->behavior == &actMonster && hit.entity->monsterAllyGetPlayerLeader() && myStats->getProficiency(weaponskill) >= 40)
+					if ( hit.entity->behavior == &actMonster && hit.entity->monsterAllyGetPlayerLeader() && hitstats->type != DUMMYBOT && myStats->getProficiency(weaponskill) >= 40)
 					{
-						doSkillIncrease = false; // fskin note: cap leveling on allies at 40
+						doSkillIncrease = false; // fskin note: cap leveling on allies (except dummies) at 40
 					}
 
 					if (doSkillIncrease
@@ -8740,7 +8762,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 
 							if (hitstats->type == DUMMYBOT) //fskin note: dummy bot speed weapon skilling (regular)
 							{
-								if (weaponskill != PRO_UNARMED && (myStats->weapon->type != ARTIFACT_AXE && myStats->weapon->type != ARTIFACT_MACE && myStats->weapon->type != ARTIFACT_SPEAR && myStats->weapon->type != ARTIFACT_SWORD))
+								if (myStats->getProficiency(weaponskill) < 20 && weaponskill != PRO_UNARMED && (myStats->weapon->type != ARTIFACT_AXE && myStats->weapon->type != ARTIFACT_MACE && myStats->weapon->type != ARTIFACT_SPEAR && myStats->weapon->type != ARTIFACT_SWORD))
 								{
 									if (myStats->getProficiency(weaponskill) < 20)
 									{
@@ -8748,19 +8770,16 @@ void Entity::attack(int pose, int charge, Entity* target)
 									}
 									if (myStats->getProficiency(weaponskill) >= 20 && myStats->getProficiency(weaponskill) < 60)
 									{
-										chance = 4;
+										chance = 3;
 									}
 									if (myStats->getProficiency(weaponskill) >= 60 && myStats->getProficiency(weaponskill) < 100)
 									{
-										chance = 10;
+										chance = 6;
 									}
 								}
-								else
+								else if (weaponskill == PRO_UNARMED && myStats->getProficiency(weaponskill) < 20)
 								{
-									if (myStats->getProficiency(weaponskill) < 20)
-									{
-										chance = 2;
-									}
+									chance = 2;
 								}
 								notify = true;
 							}
@@ -8901,7 +8920,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 								degradeOnNormalDMG *= 2;
 							}
 
-							if (hitstats->type == DUMMYBOT && hit.entity->monsterIsTinkeringCreation()) //fskin note: dummybot weapon degradation
+							if (hitstats->type == DUMMYBOT && hit.entity->monsterIsTinkeringCreation() && behavior == &actPlayer) //fskin note: dummybot weapon degradation
 							{
 								if (myStats->weapon && weaponskill != PRO_RANGED)
 								{
