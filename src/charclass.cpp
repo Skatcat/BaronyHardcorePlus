@@ -2205,6 +2205,11 @@ void initClass(const int player)
 			item2 = itemPickup(player, item);
 			hotbar[1].item = item2->uid;
 			free(item);
+
+			// fskin note: hunger stone
+			item = newItem(ROCK_HUNGER_EMPTY, EXCELLENT, 0, 1, 1, true, nullptr);
+			item2 = itemPickup(player, item);
+			free(item);
 		}
 	}
 	else if ( client_classes[player] == CLASS_MESMER )
