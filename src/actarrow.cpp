@@ -619,12 +619,11 @@ void actArrow(Entity* my)
 						{
 							if (dist > 175)
 							{
-								damage *= parent->getPER() / 7;
-								damage += hitstats->HP / 5;
-								damage += dist/5;
-
+								damage *= parent->getPER() / (17 - (parent->getStats()->getModifiedProficiency(PRO_RANGED) / 10));
+								damage += hitstats->HP / (15 - (parent->getStats()->getModifiedProficiency(PRO_RANGED) / 10));
+								damage += dist/ (15 - (parent->getStats()->getModifiedProficiency(PRO_RANGED) / 10));
 								Uint32 color = makeColorRGB(0, 255, 225);
-								messagePlayerMonsterEvent(parent->skill[1], color, *hitstats, Language::get(3732), Language::get(3732), MSG_COMBAT);
+								messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, Language::get(3732), Language::get(3732), MSG_COMBAT);
 							}
 						}
 					}
