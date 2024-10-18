@@ -3978,6 +3978,68 @@ void item_ToolTowel(Item*& item, int player)
 	}
 }
 
+void item_HungerRockEmpty(Item*& item, int player) //fskin note: hunger stone
+{
+	//if (multiplayer != CLIENT)
+	if (players[player]->isLocalPlayer())
+	{
+		if (stats[player]->playerRace != RACE_SKELETON)
+		{
+			int oldhngr = stats[player]->HUNGER;
+			if (stats[player]->HUNGER >= 1250 || (stats[player]->playerRace == RACE_INSECTOID && stats[player]->MP == stats[player]->MAXMP))
+			{
+				stats[player]->HUNGER -= oldhngr;
+				consumeItem(item, player);
+				dropItem(newItem(ROCK_HUNGER_FULL, EXCELLENT, 0, 1, 0, true, &stats[player]->inventory), player, false);
+				if (stats[player]->HUNGER <= 50)
+				{
+					stats[player]->HUNGER == 0;
+				}
+				if (stats[player]->playerRace == RACE_INSECTOID)
+				{
+					if (stats[player]->MP == stats[player]->MAXMP)
+					{
+						stats[player]->MP -= stats[player]->MP;
+					}
+				}
+			}
+			else
+			{
+				messagePlayer(player, MESSAGE_STATUS, Language::get(2958));
+			}
+		}
+		else
+		{
+			messagePlayer(player, MESSAGE_STATUS, Language::get(2960));
+		}
+	}
+}
+
+void item_HungerRockFull(Item*& item, int player)
+{
+	//if (multiplayer != CLIENT)
+	if (players[player]->isLocalPlayer())
+	{
+		if (stats[player]->HUNGER <= 50 || (stats[player]->playerRace == RACE_INSECTOID && stats[player]->MP <= (stats[player]->MAXMP/5)))
+		{
+			stats[player]->HUNGER += 1200;
+			consumeItem(item, player);
+			dropItem(newItem(ROCK_HUNGER_EMPTY, EXCELLENT, 0, 1, 0, true, &stats[player]->inventory), player, false);
+			if (stats[player]->playerRace == RACE_INSECTOID)
+			{
+				if (stats[player]->MP <= stats[player]->MAXMP/5)
+				{
+					stats[player]->MP += stats[player]->MAXMP;
+				}
+			}
+		}
+		else
+		{
+			messagePlayer(player, MESSAGE_STATUS, Language::get(2959));
+		}
+	}
+}
+
 void item_ToolTinOpener(Item* item, int player)
 {
 	if (multiplayer == CLIENT)
