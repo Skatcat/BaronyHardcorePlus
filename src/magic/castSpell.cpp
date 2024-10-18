@@ -2654,7 +2654,7 @@ Entity* castSpell(Uint32 caster_uid, spell_t* spell, bool using_magicstaff, bool
 					steamStatisticUpdateClient(player, STEAM_STAT_DYSLEXIA, STEAM_STAT_INT, 1);
 				}
 				Item* toBreak = stat->shield;
-				consumeItem(toBreak, player);
+				//consumeItem(toBreak, player); // fskin not: spellbook crumbling removed
 			}
 		}
 	}
