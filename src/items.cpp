@@ -2780,6 +2780,12 @@ void useItem(Item* item, const int player, Entity* usedBy, bool unequipForDroppi
 				}
 			}
 			break;
+		case ROCK_HUNGER_EMPTY:
+			item_HungerRockEmpty(item, player);
+			break;
+		case ROCK_HUNGER_FULL:
+			item_HungerRockFull(item, player);
+			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", static_cast<int>(item->type));
 			break;
