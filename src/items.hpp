@@ -354,9 +354,11 @@ typedef enum ItemType
 	SPELLBOOK_ANNIHILATEMONSTROSITIES,
 	SPELLBOOK_ANNIHILATEHELLSPAWN,
 	RING_RAGE,
-	QUIVER_ARCANE
+	QUIVER_ARCANE,
+	ROCK_HUNGER_EMPTY,
+	ROCK_HUNGER_FULL
 } ItemType;
-const int NUMITEMS = 335;
+const int NUMITEMS = 337;
 
 //NOTE: If you change this, make sure to update NUMCATEGORIES in game.h to reflect the total number of categories. Not doing that will make bad things happen.
 typedef enum Category
@@ -636,6 +638,8 @@ void item_ScrollTeleportation(Item* item, int player);
 void item_ScrollSummon(Item* item, int player);
 void item_AmuletSexChange(Item* item, int player);
 void item_ToolTowel(Item*& item, int player);
+void item_HungerRockEmpty(Item*& item, int player);
+void item_HungerRockFull(Item*& item, int player);
 void item_ToolTinOpener(Item* item, int player);
 void item_ToolMirror(Item*& item, int player);
 void item_ToolBeartrap(Item*& item, Entity* usedBy);
