@@ -4042,6 +4042,10 @@ bool allowedGenerateMimicOnChest(int x, int y, map_t& map)
 	{
 		return false;
 	}
+	if ( !strncmp(map.name, "Ancient Tomb", 7) ) //fskin note: make it so mimics don't ruin the new level
+	{
+		return false;
+	}
 	/*if ( map.trapexcludelocations )
 	{
 		if ( x >= 0 && x < map.width && y >= 0 && y < map.height )
