@@ -767,22 +767,22 @@ void actThrown(Entity* my)
 							{
 								if (dist > 165)
 								{
-									damage += hitstats->HP / 5;
+									damage += hitstats->HP / 8;
 									if (item->type == STEEL_CHAKRAM || item->type == CRYSTAL_SHURIKEN)
 									{
-										damage += dist / 4;
+										damage += dist / (14 - (parent->getStats()->getModifiedProficiency(PRO_RANGED) / 10));
 									}
 									else
 									{
-										damage += dist / 8;
+										damage += dist / (18 - (parent->getStats()->getModifiedProficiency(PRO_RANGED) / 10));
 									}
 									if (item->type == STEEL_CHAKRAM || item->type == CRYSTAL_SHURIKEN)
 									{
-										damage *= (parent->getPER()) / 12;
+										damage *= (parent->getPER()) / (22 - (parent->getStats()->getModifiedProficiency(PRO_RANGED) / 10));
 									}
 									else
 									{
-										damage *= (parent->getPER()) / 15;
+										damage *= (parent->getPER()) / (25 - (parent->getStats()->getModifiedProficiency(PRO_RANGED) / 10));
 									}
 									Uint32 color = makeColorRGB(0, 255, 225);
 									messagePlayerMonsterEvent(parent->skill[1], color, *hitstats, Language::get(3731), Language::get(3731), MSG_COMBAT);
