@@ -1,4 +1,39 @@
-SEPTEMBER 2024 UPDATE
+======= OCTOBER 2024 UPDATE =======
+
+- class balance changes
+-- Accursed: The last and second to last stages of hunger give you a mighty STR and DEX boost instead of weakening you
+# I found it more interesting to turn hunger into a double-edged sword for the Accursed, also giving them some flexibility to deal with hunger issues
+-- Accursed: Spawns with Hunger Stone
+--- Hunger Stone: When empty, it stores hunger satiation. When full, it gives it back to the player using it. Can only be used above/below a certain satiation threshold.
+# A complaint regarding the Accursed was the class' low viability in multiplayer settings where certain races-class combinations would find it near impossible to stay satiated. The Hunger Stone was conceptualized to add some party resource management.
+
+- mechanic changes
+-- Spellbooks now don't disappear when broken
+# It's frustrating for players who want to enchant a book as their main weapon to have it crumble and disappear due to bad RNG
+-- Extent of the PER based sniping bonus is now also tied to the Ranged skill
+# Disregarding the ranged skill at all yet dealing massive throwing weapon damage didn't feel right
+-- Cap weapon skill gainable on allies at 40
+# with the CHR ally regen bonus, this became an obvious, lame and sluggish way to level up your weapons
+-- Slowing duration on dash backstabs increased
+-- Attacking dummy bots will now allow you to speedlevel melee weapon skills in exchange for durability. Leveling with unarmed or artifact weapons is capped at 20.
+# gives tinkerers some extra utility and adds use for throwaway weapons, especially late game
+
+- map and monster changes
+-- Replaced Sokoban with the Ancient Tomb
+# Sokoban grew stale in my opinion so here's a new benign challenge level for you to earn your Djinn's Brace
+-- Decreased Insectoid Squadron Leader XP gain
+# Gave same as Raider despite being weaker
+-- Swapped Ancient Raider and Ancient Knight XP gain
+# Raider gave more XP previously but this just clashes with player intuition since the Knight appears later
+
+- fixes and QoL
+-- Fixed the "You hit a long-range shot" message only playing for host (and whenever a client hit a shot)
+-- Fixed the Conjurer skeleton having a life saving amulet at a certain rank
+-- Fixed the last purple orb in Invaded Hamlet being retrievable
+-- Changed it so purple orbs don't need to stay on the pedestal to keep the secret merchant areas open
+-- Tweaked the Gnomish Bazaar to avoid gnomes attacking the human prisoners, thus causing havoc without the players' fault
+
+======= SEPTEMBER 2024 UPDATE =======
 
 - race balance changes
 -- damage tables adjusted
