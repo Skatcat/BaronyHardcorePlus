@@ -15,7 +15,7 @@
 -- Cap weapon skill gainable on allies at 40
 # with the CHR ally regen bonus, this became an obvious, lame and sluggish way to level up your weapons
 -- Slowing duration on dash backstabs increased
--- Attacking dummy bots will now allow you to speedlevel melee weapon skills in exchange for durability. Leveling with unarmed or artifact weapons is capped at 20.
+-- Attacking dummy bots will now allow you to speedlevel melee weapon skills in exchange for durability. Leveling boost with unarmed or artifact weapons is capped at 20.
 # gives tinkerers some extra utility and adds use for throwaway weapons, especially late game
 
 - map and monster changes
