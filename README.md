@@ -16,7 +16,7 @@ QoL
 Mechanics
 - Added long-range bonus damage to ranged and throwing weapons based on PER and your Ranged skill
 - You can inflict Fear based on CHR now. Depending on the enemy, at a certain CHR, charged hits will inflict Fear. This also works for ranged - exclusively for the Arbalest
-- Dummybots now allow you to level melee weapons (not gauntlets) more quickly in exchange for their durability. Leveling unarmed or with artifact weapons is capped at 20
+- Dummybots now allow you to level melee weapons (not gauntlets) more quickly in exchange for their durability. The leveling boost of unarmed or with artifact weapons is capped at 20
   
 Weapons, Armor and Magic
 - Artifact Weapons are found in a cursed state unless dropped by human NPCs
