@@ -17,6 +17,16 @@
 -- Slowing duration on dash backstabs increased
 -- Attacking dummy bots will now allow you to speedlevel melee weapon skills in exchange for durability. Leveling boost with unarmed or artifact weapons is capped at 20.
 # gives tinkerers some extra utility and adds use for throwaway weapons, especially late game
+-- Fear inflicted through CHR has its calculation reworked
+--- You can start inflicting fear on charged hits once your current LVL + CHR value hit 10
+--- Whether you apply Fear is now dependent on your CHR relative to your current level, on a monster type basis
+---- Examples: To apply Fear to a rat, your CHR value must be at least 50 % of your LVL (say, 7 CHR at level 14). For a Cockatrice, it has to be at least 73 % (say, 59 CHR at LVL 80).
+--- Now doesn't lock out from additional CHR fear infliction for a flat 10 seconds but for the fear duration + 3 seconds.
+## Streamlining the mechanic a little bit
+
+- item changes
+-- Parashu slow nerfed from 2 to 1 second
+## Since Parashu's RNG has effectively been removed at 100 axe skill, this change makes the weapon less of a free kiting tool late game and requires more consistent attention
 
 - map and monster changes
 -- Replaced Sokoban with the Ancient Tomb
@@ -32,6 +42,7 @@
 -- Fixed the last purple orb in Invaded Hamlet being retrievable
 -- Changed it so purple orbs don't need to stay on the pedestal to keep the secret merchant areas open
 -- Tweaked the Gnomish Bazaar to avoid gnomes attacking the human prisoners, thus causing havoc without the players' fault
+-- Added main menu banners for the holiday themes
 
 ======= SEPTEMBER 2024 UPDATE =======
 
